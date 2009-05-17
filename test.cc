@@ -15,7 +15,7 @@ int main()
 #define test_search(str) do {                  \
         printf("%s = %d\n", str, trie.search(str, strlen(str) + 1));   \
     } while(0);
-#if 0
+#if 1
     test_insert("baby", 1);
     test_insert("bachelor", 2);
     test_insert("back", 3);
@@ -32,6 +32,8 @@ int main()
     test_search("bbbb");
 
     trie.trace(1);
+    printf("done %d\n", trie.go_backward(127, "baby", 4, NULL));
+    printf("done %d\n", trie.go_backward(23, "badger", 7, NULL));
 #else
     std::ifstream in("list");
 
@@ -69,3 +71,5 @@ int main()
 
     return 0;
 }
+
+// vim: ts=4 sw=4 ai et

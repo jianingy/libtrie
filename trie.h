@@ -46,24 +46,10 @@ class basic_trie
         char_type min;
     } extremum_type;
 
-    explicit basic_trie(size_type size = 1024)
-        :header_(NULL), states_(NULL), mmap_(NULL), last_base_(0)
-    {
-        header_ = static_cast<header_type *>(malloc(sizeof(header_type)));
-        if (!header_)
-            throw std::bad_alloc();
-        memset(header_, 0, sizeof(header_type));
-        inflate(size);
-    }
 
-    ~basic_trie()
-    {
-        if (mmap_) {
-        } else {
-            free(header_);
-            free(states_);
-        }
-    }
+    explicit basic_trie(size_type size = 1024);
+    ~basic_trie();
+
     void insert(const char *inputs, size_t length, value_type val);
     value_type search(const char *inputs, size_t length);
     void trace(size_type s);
@@ -71,7 +57,7 @@ class basic_trie
   protected:
 
     static const char_type kCharsetSize = 257;
-	static const char_type kTerminator = kCharsetSize;
+    static const char_type kTerminator = kCharsetSize;
 
     header_type *header_;
     state_type *states_;
@@ -114,10 +100,10 @@ class basic_trie
         states_[s].check = val;
     }
 
-	bool check_transition(size_type s, size_type t)
-	{
+    bool check_transition(size_type s, size_type t)
+    {
         return (t > 0 && t < header_->size && check(t) == s)?true:false;
-	}
+    }
 
     // Get next state from s with input ch
     size_type next(size_type s, char_type ch)
@@ -128,30 +114,52 @@ class basic_trie
     }
 
     // Get prev state from s with input ch
-    size_type prev(size_type s, char_type ch)
+    size_type prev(size_type s)
     {
         return check(s);
     }
-    // Goto next state from s with input ch, if there is no way to there,
-    // returns 0
-    size_type go_forward(size_type s,
-					     const char *inputs, 
-						 size_t length, 
-						 const char **mismatch)
-    {
-		const char *p;
-		for (p = inputs; p < inputs + length; p++) {
-			char_type ch = char_in(*p);
-        	size_type t = next(s, ch);
-			if (!check_transition(s, t))
-				break;
-			s = t;
-		}
-		if (mismatch)
-			*mismatch = p;
-		return s;
-    }
 
+    // Go forward from state s with inputs, returns the last 
+    // states and the mismatch position by pointer
+    size_type go_forward(size_type s,
+                         const char *inputs, 
+                         size_t length, 
+                         const char **mismatch)
+    {
+        const char *p;
+        for (p = inputs; p < inputs + length; p++) {
+            char_type ch = char_in(*p);
+            size_type t = next(s, ch);
+            if (!check_transition(s, t))
+                break;
+            s = t;
+        }
+        if (mismatch)
+            *mismatch = p;
+        return s;
+    }
+public:
+    // Go backward from state s with inputs, returns the last
+    // states and the mismatch position by pointer
+    size_type go_backward(size_type s,
+                          const char *inputs,
+                          size_t length,
+                          const char **mismatch)
+    {
+        const char *p;
+        for (p = inputs + length - 1; p >= inputs; p--) {
+            char_type ch = char_in(*p);
+            size_type t = prev(s);
+            if (!check_transition(t, next(t, ch)))
+                break;
+            s = t;
+        }
+        if (mismatch)
+            *mismatch = p;
+
+        return s;
+    }
+protected:
     // Find out all exists targets from s and store them into *targets.
     // If max is not null, the maximum char makes state transit from s to
     // those targets will be stored into max. Same to min.
@@ -188,3 +196,5 @@ class basic_trie
     size_type create_link(size_type s, char_type ch);
 };
 #endif  // TRIE_H_
+
+// vim: ts=4 sw=4 ai et

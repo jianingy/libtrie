@@ -4,6 +4,25 @@
 #include <cassert>
 #include "trie.h"
 
+basic_trie::basic_trie(size_type size)
+    :header_(NULL), states_(NULL), mmap_(NULL), last_base_(0)
+{
+    header_ = static_cast<header_type *>(malloc(sizeof(header_type)));
+    if (!header_)
+        throw std::bad_alloc();
+    memset(header_, 0, sizeof(header_type));
+    inflate(size);
+}
+
+basic_trie::~basic_trie()
+{
+    if (mmap_) {
+    } else {
+        free(header_);
+        free(states_);
+    }
+}
+
 basic_trie::size_type
 basic_trie::find_base(const char_type *inputs, const extremum_type &extremum)
 {
@@ -112,28 +131,28 @@ void basic_trie::insert(const char *inputs, size_t length, value_type val)
         throw std::runtime_error("basic_trie::insert: input pointer is null");
 
     size_type s;
-	const char *p;
+    const char *p;
 
-	s = go_forward(1, inputs, length, &p);
+    s = go_forward(1, inputs, length, &p);
 
-	for (/* empty */; p < inputs + length; p++) {
-		char_type ch = char_in(*p);
-		s = create_link(s, ch);
-	}
+    for (/* empty */; p < inputs + length; p++) {
+        char_type ch = char_in(*p);
+        s = create_link(s, ch);
+    }
 
-	// add a terminator
-	s = create_link(s, kTerminator);
+    // add a terminator
+    s = create_link(s, kTerminator);
     set_base(s, val);
 }
 
 
 basic_trie::value_type basic_trie::search(const char *inputs, size_t length)
 {
-	size_type s = go_forward(1, inputs, length, NULL);
-	size_type t = next(s, kTerminator);
+    size_type s = go_forward(1, inputs, length, NULL);
+    size_type t = next(s, kTerminator);
 
-	if (!check_transition(s, t))
-		return 0;
+    if (!check_transition(s, t))
+        return 0;
 
     return base(t);
 }
@@ -154,15 +173,15 @@ void basic_trie::trace(size_type s)
         for (it = trace_stack_.begin();it != trace_stack_.end(); it++) {
             cbase = base(*it);
             if (obase) {
-				if (*it - obase == kTerminator) {
-					std::cerr << "-'#'->";
-				} else {
-					char ch = char_out(*it - obase);
-					if (isalnum(ch))
-						std::cerr << "-'" << ch << "'->";
-					else
-						std::cerr << "-<" << std::hex << static_cast<int>(ch) << ">->";
-				}
+                if (*it - obase == kTerminator) {
+                    std::cerr << "-'#'->";
+                } else {
+                    char ch = char_out(*it - obase);
+                    if (isalnum(ch))
+                        std::cerr << "-'" << ch << "'->";
+                    else
+                        std::cerr << "-<" << std::hex << static_cast<int>(ch) << ">->";
+                }
             }
             std::clog << *it << "[" << cbase << "]";
             obase = cbase;
@@ -171,3 +190,5 @@ void basic_trie::trace(size_type s)
     }
     trace_stack_.pop_back();
 }
+
+// vim: ts=4 sw=4 ai et
