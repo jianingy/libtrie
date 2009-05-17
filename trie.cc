@@ -111,20 +111,15 @@ void basic_trie::insert(const char *inputs, size_t length, value_type val)
     if (!inputs)
         throw std::runtime_error("basic_trie::insert: input pointer is null");
 
-    size_type s, t;
-    const char *p;
+    size_type s;
+	const char *p;
 
-    for (p = inputs, s = 1; p < inputs + length; p++) {
-        char_type ch = char_in(*p);
-        if (!(t = go_forward(s, ch))) {
-            for (/* empty */; p < inputs + length; p++) {
-                ch = char_in(*p);
-                s = create_link(s, ch);
-            }
-            break;
-        }
-        s = t;
-    }
+	s = go_forward(1, inputs, length, &p);
+
+	for (/* empty */; p < inputs + length; p++) {
+		char_type ch = char_in(*p);
+		s = create_link(s, ch);
+	}
 
 	// add a terminator
 	s = create_link(s, kTerminator);
@@ -134,19 +129,13 @@ void basic_trie::insert(const char *inputs, size_t length, value_type val)
 
 basic_trie::value_type basic_trie::search(const char *inputs, size_t length)
 {
-    size_type s;
-    const char *p;
+	size_type s = go_forward(1, inputs, length, NULL);
+	size_type t = next(s, kTerminator);
 
-    for (p = inputs, s = 1; p < inputs + length; p++) {
-        char_type ch = char_in(*p);
-        if (!(s = go_forward(s, ch)))
-            return 0;
-    }
-	
-	if (!(s = go_forward(s, kTerminator)))
+	if (!check_transition(s, t))
 		return 0;
 
-    return s?base(s):0;
+    return base(t);
 }
 
 void basic_trie::trace(size_type s)
@@ -157,7 +146,7 @@ void basic_trie::trace(size_type s)
     trace_stack_.push_back(s);
     if ((num_target = find_exist_target(s, targets, NULL))) {
         for (char_type *p = targets; *p; p++)
-            trace(go_forward(s, *p));
+            trace(next(s, *p));
     } else {
         size_type cbase = 0, obase = 0;
         std::cerr << "transition => ";

@@ -114,6 +114,11 @@ class basic_trie
         states_[s].check = val;
     }
 
+	bool check_transition(size_type s, size_type t)
+	{
+        return (t > 0 && t < header_->size && check(t) == s)?true:false;
+	}
+
     // Get next state from s with input ch
     size_type next(size_type s, char_type ch)
     {
@@ -129,11 +134,22 @@ class basic_trie
     }
     // Goto next state from s with input ch, if there is no way to there,
     // returns 0
-    size_type go_forward(size_type s, char_type ch)
+    size_type go_forward(size_type s,
+					     const char *inputs, 
+						 size_t length, 
+						 const char **mismatch)
     {
-        size_type t = next(s, ch);
-
-        return (t > 0 && t < header_->size && check(t) == s)?t:0;
+		const char *p;
+		for (p = inputs; p < inputs + length; p++) {
+			char_type ch = char_in(*p);
+        	size_type t = next(s, ch);
+			if (!check_transition(s, t))
+				break;
+			s = t;
+		}
+		if (mismatch)
+			*mismatch = p;
+		return s;
     }
 
     // Find out all exists targets from s and store them into *targets.
@@ -147,7 +163,7 @@ class basic_trie
         char_type *p;
 
         for (ch = 1, p = targets; ch < kCharsetSize + 1; ch++) {
-            if (go_forward(s, ch)) {
+            if (check_transition(s, next(s, ch))) {
                 *(p++) = ch;
                 if (extremum) {
                     if (ch > extremum->max)

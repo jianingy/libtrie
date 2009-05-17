@@ -15,7 +15,7 @@ int main()
 #define test_search(str) do {                  \
         printf("%s = %d\n", str, trie.search(str, strlen(str) + 1));   \
     } while(0);
-#if 1
+#if 0
     test_insert("baby", 1);
     test_insert("bachelor", 2);
     test_insert("back", 3);
