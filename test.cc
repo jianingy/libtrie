@@ -6,7 +6,7 @@
 
 int main()
 {
-    basic_trie trie;
+    basic_trie trie, trie2;
 #define test_insert(str,val) do {                  \
         trie.insert(str, strlen(str) + 1, val);                  \
         printf("%s = %d\n", str, trie.search(str, strlen(str) + 1));   \
@@ -34,6 +34,9 @@ int main()
     trie.trace(1);
     printf("done %d\n", trie.go_backward(127, "baby", 4, NULL));
     printf("done %d\n", trie.go_backward(23, "badger", 7, NULL));
+    trie2 = trie;
+    trie2.insert("bcm", 4, 8);
+    trie2.trace(1);
 #else
     std::ifstream in("list");
 

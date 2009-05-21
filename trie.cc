@@ -5,8 +5,10 @@
 #include "trie.h"
 
 basic_trie::basic_trie(size_type size)
-    :header_(NULL), states_(NULL), mmap_(NULL), last_base_(0)
+    :header_(NULL), states_(NULL), last_base_(0), owner_(true)
 {
+    if (size < kCharsetSize)
+        size = kCharsetSize;
     header_ = static_cast<header_type *>(malloc(sizeof(header_type)));
     if (!header_)
         throw std::bad_alloc();
@@ -14,12 +16,59 @@ basic_trie::basic_trie(size_type size)
     inflate(size);
 }
 
+basic_trie::basic_trie(void *header, void *states)
+    :header_(NULL), states_(NULL), last_base_(0), owner_(false)
+{
+    header_ = static_cast<header_type *>(header);
+    states_ = static_cast<state_type *>(states);
+}
+
+basic_trie::basic_trie(const basic_trie &trie)
+    :header_(NULL), states_(NULL), last_base_(0), owner_(false)
+{
+    clone(trie);
+}
+
+basic_trie &basic_trie::operator=(const basic_trie &trie)
+{
+    clone(trie);
+    return *this;
+}
+
+void basic_trie::clone(const basic_trie &trie)
+{
+    if (owner_) {
+        if (header_) {
+            free(header_);
+            header_ = NULL;
+        }
+        if (states_) {
+            free(states_);
+            states_ = NULL;  // set to NULL for next realloc
+        }
+    }
+    owner_ = true;
+    header_ = static_cast<header_type *>(malloc(sizeof(header_type)));
+    if (!header_)
+        throw std::bad_alloc();
+    size_type size = trie.header()->size;
+    memcpy(header_, trie.header(), sizeof(header_type));
+    header_->size = 0;
+    inflate(size);
+    memcpy(states_, trie.states(), size);
+}
+
 basic_trie::~basic_trie()
 {
-    if (mmap_) {
-    } else {
-        free(header_);
-        free(states_);
+    if (owner_) {
+        if (header_) {
+            free(header_);
+            header_ = NULL;
+        }
+        if (states_) {
+            free(states_);
+            states_ = NULL;
+        }
     }
 }
 
@@ -94,6 +143,8 @@ basic_trie::create_link(size_type s, char_type ch)
     extremum_type extremum = {0, 0}, parent_extremum = {0, 0};
 
     size_type t = next(s, ch);
+    if (t >= header_->size)
+        inflate(t - header_->size + 1);
 
     if (base(s) > 0 && check(t) <= 0) {
         // Do Nothing !!
@@ -115,6 +166,8 @@ basic_trie::create_link(size_type s, char_type ch)
             s = relocate(s, s, targets, extremum);
         }
         t = next(s, ch);
+        if (t >= header_->size)
+            inflate(t - header_->size + 1);
     }
     set_check(t, s);
 
@@ -146,7 +199,8 @@ void basic_trie::insert(const char *inputs, size_t length, value_type val)
 }
 
 
-basic_trie::value_type basic_trie::search(const char *inputs, size_t length)
+basic_trie::value_type
+basic_trie::search(const char *inputs, size_t length) const
 {
     size_type s = go_forward(1, inputs, length, NULL);
     size_type t = next(s, kTerminator);
@@ -164,8 +218,12 @@ void basic_trie::trace(size_type s)
 
     trace_stack_.push_back(s);
     if ((num_target = find_exist_target(s, targets, NULL))) {
-        for (char_type *p = targets; *p; p++)
+        for (char_type *p = targets; *p; p++) {
+            size_type t = next(s, *p);
+            if (t >= header_->size)
+                inflate(t - header_->size + 1);
             trace(next(s, *p));
+        }
     } else {
         size_type cbase = 0, obase = 0;
         std::cerr << "transition => ";
@@ -180,7 +238,8 @@ void basic_trie::trace(size_type s)
                     if (isalnum(ch))
                         std::cerr << "-'" << ch << "'->";
                     else
-                        std::cerr << "-<" << std::hex << static_cast<int>(ch) << ">->";
+                        std::cerr << "-<" << std::hex
+                                  << static_cast<int>(ch) << ">->";
                 }
             }
             std::clog << *it << "[" << cbase << "]";
