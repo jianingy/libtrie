@@ -4,6 +4,10 @@
 #include <cassert>
 #include "trie.h"
 
+// ************************************************************************
+// * Implementation of basic_trie                                         *
+// ************************************************************************
+
 basic_trie::basic_trie(size_type size)
     :header_(NULL), states_(NULL), last_base_(0), owner_(true)
 {
@@ -249,6 +253,40 @@ void basic_trie::trace(size_type s) const
         std::cerr << "->{" << std::dec << (cbase) << "}" << std::endl;
     }
     trace_stack.pop_back();
+}
+
+// ************************************************************************
+// * Implementation of trie                                               *
+// ************************************************************************
+
+trie::trie():
+    lhs_(NULL), rhs_(NULL), index_(NULL), accept_(NULL),
+    index_size_(0), accept_size_(0)
+{
+    lhs_ = new basic_trie();
+    rhs_ = new basic_trie();
+}
+
+trie::~trie()
+{
+    if (lhs_) {
+        delete lhs_;
+        lhs_ = NULL;
+    }
+    if (rhs_) {
+        delete rhs_;
+        rhs_ = NULL;
+    }
+    if (index_) {
+        free(index_);
+        index_ = NULL;
+        index_size_ = 0;
+    }
+    if (accept_) {
+        free(accept_);
+        accept_ = NULL;
+        accept_size_ = 0;
+    }
 }
 
 // vim: ts=4 sw=4 ai et

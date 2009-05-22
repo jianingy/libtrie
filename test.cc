@@ -15,7 +15,7 @@ int main()
 #define test_search(str) do {                  \
         printf("%s = %d\n", str, trie.search(str, strlen(str) + 1));   \
     } while(0);
-#if 0
+#if 1
     basic_trie *trie2;
     test_insert("baby", 1);
     test_insert("bachelor", 2);
@@ -40,7 +40,7 @@ int main()
     trie2->trace(1);
     const basic_trie *trie3;
     trie3 = basic_trie::create_from_memory((void *)trie2->header(), (void *)trie2->states());
-    printf("*************************\n");
+    printf("***************************************************************\n");
     trie3->trace(1);
     delete trie3;
     delete trie2;
