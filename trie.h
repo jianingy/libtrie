@@ -38,7 +38,7 @@ class basic_trie
     } state_type;
 
     typedef struct {
-        char magic[36];
+        char magic[28];
         size_type size;
     } header_type;
 
@@ -51,26 +51,31 @@ class basic_trie
     static const char_type kTerminator = kCharsetSize;
 
     explicit basic_trie(size_type size = 1024);
-    explicit basic_trie(void *header, void *states);
     basic_trie(const basic_trie &trie);
     void clone(const basic_trie &trie);
     basic_trie &operator=(const basic_trie &trie);
     ~basic_trie();
     void insert(const char *inputs, size_t length, value_type val);
     value_type search(const char *inputs, size_t length) const;
-    void trace(size_type s);
+    void trace(size_type s) const;
     size_type create_link(size_type s, char_type ch);
+
+    static const basic_trie *create_from_memory(void *header,
+                                                void *states)
+    {
+        return new basic_trie(header, states);
+    }
 
     value_type base(size_type s) const
     {
         return states_[s].base;
     }
-    
+
     value_type check(size_type s) const
     {
         return states_[s].check;
     }
-    
+
     void set_base(size_type s, value_type val)
     {
         states_[s].base = val;
@@ -118,7 +123,7 @@ class basic_trie
     size_type go_backward(size_type s,
                           const char *inputs,
                           size_t length,
-                          const char **mismatch)
+                          const char **mismatch) const
     {
         const char *p;
         for (p = inputs + length - 1; p >= inputs; p--) {
@@ -139,7 +144,7 @@ class basic_trie
     // those targets will be stored into max. Same to min.
     size_type find_exist_target(size_type s,
                                 char_type *targets,
-                                extremum_type *extremum)
+                                extremum_type *extremum) const
     {
         char_type ch;
         char_type *p;
@@ -179,7 +184,8 @@ class basic_trie
         return owner_;
     }
 
-  protected:  
+  protected:
+    explicit basic_trie(void *header, void *states);
     size_type find_base(const char_type *inputs,
                         const extremum_type &extremum);
     size_type relocate(size_type stand,
@@ -220,7 +226,6 @@ class basic_trie
     header_type *header_;
     state_type *states_;
     size_type last_base_;
-    std::vector<size_type> trace_stack_;
     bool owner_;
 };
 #endif  // TRIE_H_

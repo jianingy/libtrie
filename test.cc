@@ -6,7 +6,7 @@
 
 int main()
 {
-    basic_trie trie, trie2;
+    basic_trie trie;
 #define test_insert(str,val) do {                  \
         trie.insert(str, strlen(str) + 1, val);                  \
         printf("%s = %d\n", str, trie.search(str, strlen(str) + 1));   \
@@ -15,7 +15,8 @@ int main()
 #define test_search(str) do {                  \
         printf("%s = %d\n", str, trie.search(str, strlen(str) + 1));   \
     } while(0);
-#if 1
+#if 0
+    basic_trie *trie2;
     test_insert("baby", 1);
     test_insert("bachelor", 2);
     test_insert("back", 3);
@@ -34,9 +35,15 @@ int main()
     trie.trace(1);
     printf("done %d\n", trie.go_backward(127, "baby", 4, NULL));
     printf("done %d\n", trie.go_backward(23, "badger", 7, NULL));
-    trie2 = trie;
-    trie2.insert("bcm", 4, 8);
-    trie2.trace(1);
+    trie2 = new basic_trie(trie);
+    trie2->insert("bcm", 4, 8);
+    trie2->trace(1);
+    const basic_trie *trie3;
+    trie3 = basic_trie::create_from_memory((void *)trie2->header(), (void *)trie2->states());
+    printf("*************************\n");
+    trie3->trace(1);
+    delete trie3;
+    delete trie2;
 #else
     std::ifstream in("list");
 
@@ -54,6 +61,8 @@ int main()
         std::cerr << i << " items loaded." << std::endl;
     }
 
+    basic_trie *trie2 = new basic_trie(trie);
+    const basic_trie *trie3 = basic_trie::create_from_memory((void *)trie.header(), (void *)trie.states());
     std::ifstream in2("list");
     if (in2.is_open()) {
         std::string line;
@@ -62,7 +71,7 @@ int main()
             getline(in2, line);
             if (line.empty()) continue;
 //            std::cout << line.c_str() << " = " << trie.search(line.c_str()) << std::endl;
-            if (trie.search(line.c_str(), line.length() + 1) > 0) {
+            if (trie2->search(line.c_str(), line.length() + 1) > 0) {
                 std::cout << line.c_str() << std::endl;
             }            
             ++i;
@@ -70,6 +79,8 @@ int main()
         std::cerr << i << " items reviewed." << std::endl;    
     }
 //    trie.trace(1);
+    delete trie3;
+    delete trie2;
 #endif
 
     return 0;

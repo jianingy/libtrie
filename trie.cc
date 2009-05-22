@@ -51,11 +51,12 @@ void basic_trie::clone(const basic_trie &trie)
     header_ = static_cast<header_type *>(malloc(sizeof(header_type)));
     if (!header_)
         throw std::bad_alloc();
-    size_type size = trie.header()->size;
+    states_ = static_cast<state_type *>
+              (malloc(trie.header()->size * sizeof(state_type)));
+    if (!states_)
+        throw std::bad_alloc();
     memcpy(header_, trie.header(), sizeof(header_type));
-    header_->size = 0;
-    inflate(size);
-    memcpy(states_, trie.states(), size);
+    memcpy(states_, trie.states(), trie.header()->size * sizeof(state_type));
 }
 
 basic_trie::~basic_trie()
@@ -211,24 +212,24 @@ basic_trie::search(const char *inputs, size_t length) const
     return base(t);
 }
 
-void basic_trie::trace(size_type s)
+void basic_trie::trace(size_type s) const
 {
     size_type num_target;
     char_type targets[kCharsetSize + 1];
+    static std::vector<size_type> trace_stack;
 
-    trace_stack_.push_back(s);
+    trace_stack.push_back(s);
     if ((num_target = find_exist_target(s, targets, NULL))) {
         for (char_type *p = targets; *p; p++) {
             size_type t = next(s, *p);
-            if (t >= header_->size)
-                inflate(t - header_->size + 1);
-            trace(next(s, *p));
+            if (t < header_->size)
+                trace(next(s, *p));
         }
     } else {
         size_type cbase = 0, obase = 0;
         std::cerr << "transition => ";
         std::vector<size_type>::const_iterator it;
-        for (it = trace_stack_.begin();it != trace_stack_.end(); it++) {
+        for (it = trace_stack.begin();it != trace_stack.end(); it++) {
             cbase = base(*it);
             if (obase) {
                 if (*it - obase == kTerminator) {
@@ -247,7 +248,7 @@ void basic_trie::trace(size_type s)
         }
         std::cerr << "->{" << std::dec << (cbase) << "}" << std::endl;
     }
-    trace_stack_.pop_back();
+    trace_stack.pop_back();
 }
 
 // vim: ts=4 sw=4 ai et
