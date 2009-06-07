@@ -70,7 +70,7 @@ class basic_trie
     basic_trie &operator=(const basic_trie &trie);
     ~basic_trie();
     void insert(const char *inputs, size_t length, value_type val);
-    value_type search(const char *inputs, size_t length) const;
+    bool search(const char *inputs, size_t length, value_type *value) const;
     size_type create_transition(size_type s, char_type ch);
 
 #ifndef NDEBUG
@@ -331,7 +331,7 @@ class double_trie {
     explicit double_trie(const char *filename);
     ~double_trie();
     void insert(const char *inputs, size_t length, value_type value);
-    int search(const char *inputs, size_t length) const;
+    bool search(const char *inputs, size_t length, value_type *value) const;
     void build(const char *filename);
     const basic_trie *front_trie() const
     {

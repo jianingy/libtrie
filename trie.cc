@@ -211,16 +211,17 @@ void basic_trie::insert(const char *inputs, size_t length, value_type val)
 }
 
 
-basic_trie::value_type
-basic_trie::search(const char *inputs, size_t length) const
+bool basic_trie::search(const char *inputs, size_t length, value_type *value) const
 {
     size_type s = go_forward(1, inputs, length, NULL);
     size_type t = next(s, kTerminator);
 
     if (!check_transition(s, t))
-        return 0;
+        return false;
 
-    return base(t);
+    if (value)
+        *value = base(t);
+    return true;
 }
 
 #ifndef NDEBUG
@@ -529,19 +530,23 @@ void double_trie::insert(const char *inputs, size_t length, value_type value)
     return;
 }
 
-int double_trie::search(const char *inputs, size_t length) const
+bool double_trie::search(const char *inputs, size_t length, value_type *value) const
 {
     size_type s;
     const char *p;
     s = lhs_->go_forward(1, inputs, length, &p);
     if (p < inputs + length && !check_separator(s))
-        return -1;
+        return false;
     if (p >= inputs + length) {
         size_type t = lhs_->next(s, basic_trie::kTerminator);
-        if (lhs_->check_transition(s, t))
-            return (check_separator(t))?index_[-lhs_->base(t)].data:lhs_->base(t);
-        else if (!check_separator(s))
-            return -1;
+        if (lhs_->check_transition(s, t)) {
+            if (value)
+                *value = (check_separator(t))?index_[-lhs_->base(t)].data:
+                                              lhs_->base(t);
+            return true;
+        } else if (!check_separator(s)) {
+            return false;
+        }
     }
     size_type r = link_state(s);
     if (rhs_->check_reverse_transition(r, basic_trie::kTerminator))
@@ -549,9 +554,12 @@ int double_trie::search(const char *inputs, size_t length) const
 
     r = rhs_->go_backward(r, p, length - (p - inputs), NULL);
     r = rhs_->prev(r);    
-    if (r == 1)
-        return index_[-lhs_->base(s)].data;
-    return -2;
+    if (r == 1) {
+        if (value)
+            *value = index_[-lhs_->base(s)].data;
+        return true;
+    }
+    return false;
 }
 
 void double_trie::build(const char *filename)
