@@ -1,4 +1,4 @@
-// Copyright Jianing Yang <detrox@gmail.com> 2009
+// Copyright Jianing Yang <jianingy.yang@gmail.com> 2009
 
 #include <iostream>
 #include <cassert>
@@ -7,6 +7,8 @@
 // ************************************************************************
 // * Implementation of basic_trie                                         *
 // ************************************************************************
+
+char trie::magic_[16] = "TWO_TRIE";
 
 basic_trie::basic_trie(size_type size, 
                        trie_relocator_interface<size_type> *relocator)
@@ -221,6 +223,7 @@ basic_trie::search(const char *inputs, size_t length) const
     return base(t);
 }
 
+#ifndef NDEBUG
 void basic_trie::trace(size_type s) const
 {
     size_type num_target;
@@ -259,52 +262,98 @@ void basic_trie::trace(size_type s) const
     }
     trace_stack.pop_back();
 }
+#endif
 
 // ************************************************************************
 // * Implementation of trie                                               *
 // ************************************************************************
 
 trie::trie()
-    :lhs_(NULL), rhs_(NULL), index_(NULL), accept_(NULL),
-     index_size_(0), accept_size_(0), next_accept_(1), next_index_(1),
-     front_relocator_(NULL), rear_relocator_(NULL), stand_(0)
+    :header_(NULL), lhs_(NULL), rhs_(NULL), index_(NULL), accept_(NULL),
+     next_accept_(1), next_index_(1), front_relocator_(NULL),
+     rear_relocator_(NULL), stand_(0), mmap_(NULL), mmap_size_(0)
 {
+    header_ = new header_type();
+    memset(header_, 0, sizeof(header_type));
+    strcpy(header_->magic, magic_);
     front_relocator_ = new trie_relocator<trie>(this, &trie::relocate_front);
     rear_relocator_ = new trie_relocator<trie>(this, &trie::relocate_rear);
     lhs_ = new basic_trie();
     rhs_ = new basic_trie();
     lhs_->set_relocator(front_relocator_);
     rhs_->set_relocator(rear_relocator_);
+    header_->index_size = 1024;
+    index_ = static_cast<index_type *>(malloc(sizeof(index_type) *
+                                              header_->index_size));
+    if (!index_)
+        throw std::bad_alloc();
+    memset(index_, 0, sizeof(index_type) * header_->index_size);
+    header_->accept_size = 1024;
+    accept_ = static_cast<accept_type *>(malloc(sizeof(accept_type) *
+                                                header_->accept_size));
+    if (!accept_)
+        throw std::bad_alloc();
+    memset(index_, 0, sizeof(accept_type) * header_->accept_size);
 }
+
+trie::trie(const char *filename)
+    :header_(NULL), lhs_(NULL), rhs_(NULL), index_(NULL), accept_(NULL),
+     next_accept_(1), next_index_(1), front_relocator_(NULL),
+     rear_relocator_(NULL), stand_(0), mmap_(NULL), mmap_size_(0)
+{
+    struct stat sb;
+    int fd, retval;
+
+    if (!filename)
+        throw std::runtime_error(std::string("can not load from file ") + filename);
+
+    fd = open(filename, O_RDONLY);
+    if (fd < 0)
+        throw std::runtime_error(strerror(errno));
+    if (fstat(fd, &sb) < 0) 
+        throw std::runtime_error(strerror(errno));
+
+    mmap_ = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (mmap_ == MAP_FAILED)
+        throw std::runtime_error(strerror(errno));
+    while (retval = close(fd), retval == -1 && errno == EINTR) ;
+    mmap_size_ = sb.st_size;
+    
+    void *start;
+    start = header_ = (header_type *)(mmap_);
+    if (strcmp(header_->magic, magic_))
+        throw std::runtime_error("file corrupted");
+    start = index_ = (index_type *)((header_type *)start + 1);
+    start = accept_ = (accept_type *)((index_type *)start +
+                                      header_->index_size);
+    start = (accept_type *)start + header_->accept_size;
+    lhs_ = new basic_trie(start, (basic_trie::header_type *)start + 1);
+    start = (basic_trie::state_type *)((basic_trie::header_type *)start + 1) +
+            lhs_->header()->size;
+    rhs_ = new basic_trie(start, (basic_trie::header_type *)start + 1);
+}
+
 
 trie::~trie()
 {
-    if (lhs_) {
-        delete lhs_;
-        lhs_ = NULL;
+#define sanity_delete(X)  do { if (X) {delete (X); (X) = NULL;} } while(0);
+#define sanity_free(X)  do { if (X) {free (X); (X) = NULL;} } while(0);
+    
+    if (mmap_) {
+        if (munmap(mmap_, mmap_size_) < 0)
+            throw std::runtime_error(strerror(errno));
+    } else {
+        sanity_delete(header_);
+        sanity_free(index_);
+        sanity_free(accept_);
+        sanity_delete(front_relocator_);
+        sanity_delete(rear_relocator_);
     }
-    if (rhs_) {
-        delete rhs_;
-        rhs_ = NULL;
-    }
-    if (index_) {
-        free(index_);
-        index_ = NULL;
-        index_size_ = 0;
-    }
-    if (accept_) {
-        free(accept_);
-        accept_ = NULL;
-        accept_size_ = 0;
-    }
-    if (front_relocator_) {
-        delete front_relocator_;
-        front_relocator_ = NULL;
-    }
-    if (rear_relocator_) {
-        delete rear_relocator_;
-        rear_relocator_ = NULL;
-    }
+    sanity_delete(lhs_);
+    sanity_delete(rhs_);
+
+#undef sanity_delete
+#undef sanity_free
 }
 
 basic_trie::size_type
@@ -334,7 +383,7 @@ trie::rhs_append(const char *inputs, size_t length)
                 it++) {
             set_link(*it, t);
         }
-        refer_.erase(s);
+        free_accept_entry(s);
     }
     if (s == 1) {
         p = inputs + length - 1;
@@ -347,10 +396,11 @@ trie::rhs_append(const char *inputs, size_t length)
     return s;
 }
 
-void trie::lhs_insert(size_type s, const char *inputs, size_t length)
+basic_trie::size_type
+trie::lhs_insert(size_type s, const char *inputs, size_t length)
 {
     size_type t = lhs_->create_transition(s, basic_trie::char_in(inputs[0]));
-    set_link(t, rhs_append(inputs + 1, length - 1));
+    return set_link(t, rhs_append(inputs + 1, length - 1));
 }
 
 void trie::rhs_clean_more(size_type t)
@@ -381,18 +431,20 @@ void trie::rhs_clean_more(size_type t)
 void trie::rhs_insert(size_type s, size_type r, 
                       const char *match, size_t match_length,
                       const char *remain, size_t remain_length,
-                      char ch, bool terminator)
+                      char ch, bool terminator, size_type value)
 {
+    size_type i;
     // R-1
     size_type u = link_state(s); // u might be zero
+    value_type oval = index_[-lhs_->base(s)].data;
     index_[-lhs_->base(s)].index = 0;
-    lhs_->set_base(s, 0); // XXX: Bug?
+    lhs_->set_base(s, 0); // XXX: check out the crash reason if base(s) is not set to zero.
     stand_ = r;
     if (u > 0) {
         refer_[u].referer.erase(s);
 
         if (refer_[u].referer.size() == 0)
-            refer_.erase(u);
+            free_accept_entry(u);
     }
 
     // R-2
@@ -404,7 +456,8 @@ void trie::rhs_insert(size_type s, size_type r,
         s = t;
     }
     t = lhs_->create_transition(s, basic_trie::char_in(*remain));
-    set_link(t, rhs_append(remain + 1, remain_length - 1));
+    i = set_link(t, rhs_append(remain + 1, remain_length - 1));
+    index_[i].data = value;
 
     // R-3
     t = lhs_->create_transition(s, (terminator)?basic_trie::kTerminator:
@@ -415,7 +468,8 @@ void trie::rhs_insert(size_type s, size_type r,
     else
         r = rhs_->next(v, basic_trie::kTerminator);
 
-    set_link(t, r);
+    i = set_link(t, r);
+    index_[i].data = oval;
 
     // R-4
     if (u > 0) {
@@ -425,13 +479,14 @@ void trie::rhs_insert(size_type s, size_type r,
 
 }
 
-void trie::insert(const char *inputs, size_t length)
+void trie::insert(const char *inputs, size_t length, value_type value)
 {
-    size_type s;
+    size_type s, i;
     const char *p;
     s = lhs_->go_forward(1, inputs, length, &p);
     if (p < inputs + length && !check_separator(s)) {
-        lhs_insert(s, p, length - (p - inputs));
+        i = lhs_insert(s, p, length - (p - inputs));
+        index_[i].data = value;
         return;
     }
     if (p >= inputs + length)
@@ -456,11 +511,11 @@ void trie::insert(const char *inputs, size_t length)
     }
     if (p < inputs + length)
         rhs_insert(s, r, exists_.c_str(), exists_.length(),
-                   p, length - (p - inputs), last, terminator);
+                   p, length - (p - inputs), last, terminator, value);
     return;
 }
 
-int trie::search(const char *inputs, size_t length)
+int trie::search(const char *inputs, size_t length) const
 {
     size_type s;
     const char *p;
@@ -468,7 +523,7 @@ int trie::search(const char *inputs, size_t length)
     if (p < inputs + length && !check_separator(s))
         return -1;
     if (p >= inputs + length)
-        return true;
+        return index_[-lhs_->base(s)].data;
     size_type r = link_state(s);
     if (rhs_->check_reverse_transition(r, basic_trie::kTerminator))
         r = rhs_->prev(r);
@@ -476,8 +531,32 @@ int trie::search(const char *inputs, size_t length)
     r = rhs_->go_backward(r, p, length - (p - inputs), NULL);
     r = rhs_->prev(r);    
     if (r == 1)
-        return true;
+        return index_[-lhs_->base(s)].data;
     return -2;
+}
+
+void trie::build(const char *filename)
+{
+    FILE *out;
+    
+    if (!filename)
+        throw std::runtime_error(std::string("can not save to file ") + filename);
+
+    if ((out = fopen(filename, "w+"))) {
+        fwrite(header_, sizeof(header_type), 1, out);
+        fwrite(index_, sizeof(index_type) * header_->index_size, 1, out);
+        fwrite(accept_, sizeof(accept_type) * header_->accept_size, 1, out);
+        fwrite(lhs_->header(), sizeof(basic_trie::header_type), 1, out);
+        fwrite(lhs_->states(), sizeof(basic_trie::state_type) * lhs_->header()->size, 1, out);
+        fwrite(rhs_->header(), sizeof(basic_trie::header_type), 1, out);
+        fwrite(rhs_->states(), sizeof(basic_trie::state_type) * rhs_->header()->size, 1, out);
+        fclose(out);
+        fprintf(stderr, "index = %d, accept = %d, lhs = %d, rhs = %d\n",
+                        sizeof(index_type) * header_->index_size,
+                        sizeof(accept_type) * header_->accept_size,
+                        sizeof(basic_trie::state_type) * lhs_->header()->size,
+                        sizeof(basic_trie::state_type) * rhs_->header()->size);
+    }
 }
 
 // vim: ts=4 sw=4 ai et
