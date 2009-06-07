@@ -8,7 +8,7 @@
 // * Implementation of basic_trie                                         *
 // ************************************************************************
 
-char trie::magic_[16] = "TWO_TRIE";
+char double_trie::magic_[16] = "TWO_TRIE";
 
 basic_trie::basic_trie(size_type size, 
                        trie_relocator_interface<size_type> *relocator)
@@ -268,7 +268,7 @@ void basic_trie::trace(size_type s) const
 // * Implementation of trie                                               *
 // ************************************************************************
 
-trie::trie()
+double_trie::double_trie()
     :header_(NULL), lhs_(NULL), rhs_(NULL), index_(NULL), accept_(NULL),
      next_accept_(1), next_index_(1), front_relocator_(NULL),
      rear_relocator_(NULL), stand_(0), mmap_(NULL), mmap_size_(0)
@@ -276,8 +276,8 @@ trie::trie()
     header_ = new header_type();
     memset(header_, 0, sizeof(header_type));
     strcpy(header_->magic, magic_);
-    front_relocator_ = new trie_relocator<trie>(this, &trie::relocate_front);
-    rear_relocator_ = new trie_relocator<trie>(this, &trie::relocate_rear);
+    front_relocator_ = new trie_relocator<double_trie>(this, &double_trie::relocate_front);
+    rear_relocator_ = new trie_relocator<double_trie>(this, &double_trie::relocate_rear);
     lhs_ = new basic_trie();
     rhs_ = new basic_trie();
     lhs_->set_relocator(front_relocator_);
@@ -296,7 +296,7 @@ trie::trie()
     memset(index_, 0, sizeof(accept_type) * header_->accept_size);
 }
 
-trie::trie(const char *filename)
+double_trie::double_trie(const char *filename)
     :header_(NULL), lhs_(NULL), rhs_(NULL), index_(NULL), accept_(NULL),
      next_accept_(1), next_index_(1), front_relocator_(NULL),
      rear_relocator_(NULL), stand_(0), mmap_(NULL), mmap_size_(0)
@@ -334,7 +334,7 @@ trie::trie(const char *filename)
 }
 
 
-trie::~trie()
+double_trie::~double_trie()
 {
 #define sanity_delete(X)  do { if (X) {delete (X); (X) = NULL;} } while(0);
 #define sanity_free(X)  do { if (X) {free (X); (X) = NULL;} } while(0);
@@ -357,7 +357,7 @@ trie::~trie()
 }
 
 basic_trie::size_type
-trie::rhs_append(const char *inputs, size_t length)
+double_trie::rhs_append(const char *inputs, size_t length)
 {
     const char *p = NULL;
     size_type s = 1, t;
@@ -397,13 +397,13 @@ trie::rhs_append(const char *inputs, size_t length)
 }
 
 basic_trie::size_type
-trie::lhs_insert(size_type s, const char *inputs, size_t length)
+double_trie::lhs_insert(size_type s, const char *inputs, size_t length)
 {
     size_type t = lhs_->create_transition(s, basic_trie::char_in(inputs[0]));
     return set_link(t, rhs_append(inputs + 1, length - 1));
 }
 
-void trie::rhs_clean_more(size_type t)
+void double_trie::rhs_clean_more(size_type t)
 {
     assert(t > 0);
     if (outdegree(t) == 0 && count_referer(t) == 0) {
@@ -428,7 +428,7 @@ void trie::rhs_clean_more(size_type t)
     }
 }
 
-void trie::rhs_insert(size_type s, size_type r, 
+void double_trie::rhs_insert(size_type s, size_type r, 
                       const char *match, size_t match_length,
                       const char *remain, size_t remain_length,
                       char ch, bool terminator, size_type value)
@@ -481,7 +481,7 @@ void trie::rhs_insert(size_type s, size_type r,
 
 }
 
-void trie::insert(const char *inputs, size_t length, value_type value)
+void double_trie::insert(const char *inputs, size_t length, value_type value)
 {
     size_type s, i;
     const char *p;
@@ -517,7 +517,7 @@ void trie::insert(const char *inputs, size_t length, value_type value)
     return;
 }
 
-int trie::search(const char *inputs, size_t length) const
+int double_trie::search(const char *inputs, size_t length) const
 {
     size_type s;
     const char *p;
@@ -537,7 +537,7 @@ int trie::search(const char *inputs, size_t length) const
     return -2;
 }
 
-void trie::build(const char *filename)
+void double_trie::build(const char *filename)
 {
     FILE *out;
     

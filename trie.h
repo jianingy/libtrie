@@ -314,7 +314,7 @@ class trie_relocator: public trie_relocator_interface<basic_trie::size_type> {
     void operator=(const trie_relocator &);
 };
 
-class trie {
+class double_trie {
   public:
     typedef basic_trie::size_type size_type;
     typedef basic_trie::value_type value_type;
@@ -327,9 +327,9 @@ class trie {
         char unused[40];
     } header_type;
 
-    trie();
-    explicit trie(const char *filename);
-    ~trie();
+    double_trie();
+    explicit double_trie(const char *filename);
+    ~double_trie();
     void insert(const char *inputs, size_t length, value_type value);
     int search(const char *inputs, size_t length) const;
     void build(const char *filename);
@@ -575,7 +575,7 @@ class trie {
     std::map<size_type, refer_type> refer_;
     std::string exists_;
     size_type next_accept_, next_index_;
-    trie_relocator<trie> *front_relocator_, *rear_relocator_;
+    trie_relocator<double_trie> *front_relocator_, *rear_relocator_;
     size_type stand_;
     std::deque<size_type> free_accept_;
     std::deque<size_type> free_index_;
