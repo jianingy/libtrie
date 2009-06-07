@@ -438,6 +438,8 @@ void trie::rhs_insert(size_type s, size_type r,
     size_type u = link_state(s); // u might be zero
     value_type oval = index_[-lhs_->base(s)].data;
     index_[-lhs_->base(s)].index = 0;
+    index_[-lhs_->base(s)].data = 0;
+    free_index_.push_back(-lhs_->base(s));
     lhs_->set_base(s, 0); // XXX: check out the crash reason if base(s) is not set to zero.
     stand_ = r;
     if (u > 0) {

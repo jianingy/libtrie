@@ -437,11 +437,18 @@ class trie {
 
     size_type find_index_entry(size_type s)
     {
-        assert(lhs_->base(s) <= 0);
+        size_type next;
+
         if (lhs_->base(s) >= 0) {
-            if (next_index_ >= header_->index_size) {
-                size_type nsize = next_index_ * 2;
-                //size_type nsize = (((header_->index_size + next) >> 12) + 1) << 12;
+            if (free_index_.size() > 0) {
+                next = free_index_.front();
+                free_index_.pop_front();
+            } else {
+                next = next_index_;
+                ++next_index_;
+            }
+            if (next >= header_->index_size) {
+                size_type nsize = next * 2;
                 index_ = static_cast<index_type *>
                         (realloc(index_, nsize * sizeof(index_type)));
                 if (!index_)
@@ -450,9 +457,7 @@ class trie {
                        (nsize - header_->index_size) * sizeof(index_type));
                 header_->index_size = nsize;
             }
-            //printf("index s = %d\n", s);
-            lhs_->set_base(s, -next_index_);
-            ++next_index_;
+            lhs_->set_base(s, -next);
         }
         return -lhs_->base(s);
     }
@@ -573,6 +578,7 @@ class trie {
     trie_relocator<trie> *front_relocator_, *rear_relocator_;
     size_type stand_;
     std::deque<size_type> free_accept_;
+    std::deque<size_type> free_index_;
     void *mmap_;
     size_t mmap_size_;
     static char magic_[16];
