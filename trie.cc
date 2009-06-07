@@ -545,6 +545,8 @@ void trie::build(const char *filename)
         throw std::runtime_error(std::string("can not save to file ") + filename);
 
     if ((out = fopen(filename, "w+"))) {
+        header_->index_size = next_index_;
+        header_->accept_size = next_accept_;
         fwrite(header_, sizeof(header_type), 1, out);
         fwrite(index_, sizeof(index_type) * header_->index_size, 1, out);
         fwrite(accept_, sizeof(accept_type) * header_->accept_size, 1, out);
