@@ -40,6 +40,10 @@ static const char* pretty_size(size_t size, char *buf, size_t buflen)
     return buf;
 }
 
+trie_interface::~trie_interface()
+{
+}
+
 // ************************************************************************
 // * Implementation of basic_trie                                         *
 // ************************************************************************

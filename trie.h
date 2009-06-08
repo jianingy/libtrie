@@ -32,6 +32,20 @@
 #include <set>
 #include <deque>
 
+class trie_interface {
+  public:
+    typedef int32_t value_type;
+    typedef int32_t size_type;
+    typedef int32_t char_type;
+
+    trie_interface() {}
+    trie_interface(const char *filename) {}
+    virtual void insert(const char *inputs, size_t length, value_type value) = 0;
+    virtual bool search(const char *inputs, size_t length, value_type *value) const = 0;
+    virtual void build(const char *filename, bool verbose = false) = 0;
+    virtual ~trie_interface() = 0; 
+};
+
 template<typename T> class trie_relocator_interface {
   public:
     virtual void relocate(T s, T t) = 0;
@@ -55,9 +69,9 @@ T* resize(T *ptr, size_t old_size, size_t new_size)
 class basic_trie
 {
   public:
-    typedef int32_t value_type;
-    typedef int32_t size_type;
-    typedef int32_t char_type;
+    typedef trie_interface::value_type value_type;
+    typedef trie_interface::size_type size_type;
+    typedef trie_interface::char_type char_type;
 
     typedef struct {
         value_type base;
@@ -326,7 +340,7 @@ class trie_relocator: public trie_relocator_interface<basic_trie::size_type> {
     void operator=(const trie_relocator &);
 };
 
-class double_trie {
+class double_trie: public trie_interface {
   public:
     typedef basic_trie::size_type size_type;
     typedef basic_trie::value_type value_type;
@@ -589,7 +603,7 @@ class double_trie {
     static const char magic_[16];
 };
 
-class suffix_trie
+class suffix_trie: public trie_interface
 {
   public:
     typedef basic_trie::char_type char_type;
