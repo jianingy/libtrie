@@ -88,6 +88,8 @@ class basic_trie
     void insert(const char *inputs, size_t length, value_type val);
     bool search(const char *inputs, size_t length, value_type *value) const;
     size_type create_transition(size_type s, char_type ch);
+    size_type find_base(const char_type *inputs,
+                        const extremum_type &extremum);
 
 #ifndef NDEBUG
     void trace(size_type s) const;
@@ -252,8 +254,6 @@ class basic_trie
     }
 
   protected:
-    size_type find_base(const char_type *inputs,
-                        const extremum_type &extremum);
     size_type relocate(size_type stand,
                        size_type s,
                        const char_type *inputs,
@@ -586,12 +586,13 @@ class double_trie {
     std::deque<size_type> free_index_;
     void *mmap_;
     size_t mmap_size_;
-    static char magic_[16];
+    static const char magic_[16];
 };
 
 class suffix_trie
 {
   public:
+    typedef basic_trie::char_type char_type;
     typedef basic_trie::size_type size_type;
     typedef basic_trie::value_type value_type;
     typedef size_type suffix_type;
@@ -602,18 +603,25 @@ class suffix_trie
     } header_type;
 
     typedef struct {
-        size_type *data;
+        char_type *data;
         size_t size;
     } common_type;
 
     suffix_trie();
+    explicit suffix_trie(const char *filename);
     ~suffix_trie();
     void insert(const char *inputs, size_t length, value_type val);
-    bool search(const char *inputs, size_t length, value_type *value);
+    bool search(const char *inputs, size_t length, value_type *value) const;
+    void build(const char *filename, bool verbose);
 
     const basic_trie *trie()
     {
         return trie_;
+    }
+
+    const suffix_type *suffix()
+    {
+        return suffix_;
     }
 
     void trace_suffix(size_type start, size_type count)
@@ -643,7 +651,7 @@ class suffix_trie
     {
         // align with 4k
         size_type nsize = (((common_.size + size) >> 12) + 1) << 12;
-        common_.data = resize<size_type>(common_.data, common_.size, nsize);
+        common_.data = resize<char_type>(common_.data, common_.size, nsize);
         common_.size = nsize;
     }
 
@@ -658,6 +666,9 @@ class suffix_trie
     header_type *header_;
     size_type next_suffix_;
     common_type common_;
+    void *mmap_;
+    size_t mmap_size_;
+    static const char magic_[16];
 };
 
 #endif  // TRIE_H_

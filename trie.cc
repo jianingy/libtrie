@@ -16,7 +16,8 @@
     }} while (0);
 
 
-char double_trie::magic_[16] = "TWO_TRIE";
+const char double_trie::magic_[16] = "TWO_TRIE";
+const char suffix_trie::magic_[16] = "TAIL_TRIE";
 
 // ************************************************************************
 // * Implementation of helper functions                                   *
@@ -657,7 +658,8 @@ void double_trie::build(const char *filename, bool verbose)
 // ************************************************************************
 
 suffix_trie::suffix_trie()
-    :trie_(NULL), suffix_(NULL), header_(NULL), next_suffix_(1)
+    :trie_(NULL), suffix_(NULL), header_(NULL), next_suffix_(1),
+     mmap_(NULL), mmap_size_(NULL)
 {
     trie_ = new basic_trie();
     header_ = new header_type();
@@ -665,11 +667,54 @@ suffix_trie::suffix_trie()
     resize_suffix(256);
 }
 
+suffix_trie::suffix_trie(const char *filename)
+    :trie_(NULL), suffix_(NULL), header_(NULL), next_suffix_(1),
+     mmap_(NULL), mmap_size_(NULL)
+{
+    struct stat sb;
+    int fd, retval;
+
+    if (!filename)
+        throw std::runtime_error(std::string("can not load from file ")
+                                 + filename);
+
+    fd = open(filename, O_RDONLY);
+    if (fd < 0)
+        throw std::runtime_error(strerror(errno));
+    if (fstat(fd, &sb) < 0)
+        throw std::runtime_error(strerror(errno));
+
+    mmap_ = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (mmap_ == MAP_FAILED)
+        throw std::runtime_error(strerror(errno));
+    while (retval = close(fd), retval == -1 && errno == EINTR) {
+        // exmpty
+    }
+    mmap_size_ = sb.st_size;
+
+    void *start;
+    start = header_ = reinterpret_cast<header_type *>(mmap_);
+    if (strcmp(header_->magic, magic_))
+        throw std::runtime_error("file corrupted");
+    // load suffix
+    suffix_ = reinterpret_cast<suffix_type *>(
+              reinterpret_cast<header_type *>(start) + 1);
+    // load trie
+    start = suffix_ + header_->suffix_size;
+    trie_ = new basic_trie(start,
+                          reinterpret_cast<basic_trie::header_type *>(start)
+                          + 1);
+}
+
+
 suffix_trie::~suffix_trie()
 {
-    sanity_delete(header_);
-    if (suffix_)
-        free(suffix_);
+    if (!mmap_) {
+        sanity_delete(header_);
+        sanity_delete(trie_);
+        sanity_delete_array(suffix_);
+        sanity_delete_array(common_.data);
+    }
 }
 
 void suffix_trie::insert_suffix(size_type s,
@@ -696,16 +741,24 @@ void suffix_trie::branch(size_type s,
 {
     size_type suffix_start = -trie_->base(s);
     const char *p;
-    size_type *cp;
+    char_type *cp;
+    basic_trie::extremum_type extremum = {0, 0};
 
     // find common string
     if (length + 1 >= common_.size)
         resize_common(length + 1);
     for (p = inputs, cp = common_.data; p < inputs + length
                     && suffix_[suffix_start + p - inputs] 
-                       == basic_trie::char_in(*p); p++)
-       *(cp++) = basic_trie::char_in(*p);
-    *cp = 0; 
+                       == basic_trie::char_in(*p); p++) {
+       *cp = basic_trie::char_in(*p);
+
+       if (*p > extremum.max || !extremum.max)
+           extremum.max = *cp;
+       if (*p < extremum.min || !extremum.min)
+           extremum.min = *cp;
+       ++cp;    
+    }
+    *cp = '\0'; 
     
     if (p >= inputs + length
         && suffix_[suffix_start + p - inputs] == basic_trie::kTerminator) {
@@ -714,6 +767,7 @@ void suffix_trie::branch(size_type s,
 
     // insert common string into trie
     size_type t = s;
+    trie_->set_base(s, trie_->find_base(common_.data, extremum));
     for (cp = common_.data; *cp; cp++)
         t = trie_->create_transition(t, *cp);
     // create twig for old suffix
@@ -747,7 +801,8 @@ void suffix_trie::insert(const char *inputs, size_t length, value_type val)
     }
 }
 
-bool suffix_trie::search(const char *inputs, size_t length, value_type *value)
+bool
+suffix_trie::search(const char *inputs, size_t length, value_type *value) const
 {
     if (!inputs)
         throw std::runtime_error("suffix_trie::search: input pointer is null");
@@ -784,4 +839,37 @@ bool suffix_trie::search(const char *inputs, size_t length, value_type *value)
     }
 }
 
+void suffix_trie::build(const char *filename, bool verbose)
+{
+    FILE *out;
+
+    if (!filename)
+        throw std::runtime_error(std::string("can not save to file ")
+                                 + filename);
+
+    if ((out = fopen(filename, "w+"))) {
+        snprintf(header_->magic, sizeof(header_->magic), "%s", magic_);
+        header_->suffix_size = next_suffix_ - 1;
+        fwrite(header_, sizeof(header_type), 1, out);
+        fwrite(suffix_, sizeof(suffix_type) * header_->suffix_size, 1, out);
+        fwrite(trie_->header(), sizeof(basic_trie::header_type), 1, out);
+        fwrite(trie_->states(), sizeof(basic_trie::state_type)
+                               * trie_->header()->size, 1, out);
+                               
+        fclose(out);
+        if (verbose) {
+            char buf[256];
+            size_t size[2];
+            size[0] = sizeof(suffix_type) * header_->suffix_size;
+            size[1] = sizeof(basic_trie::state_type) * trie_->header()->size;
+
+            fprintf(stderr, "suffix = %s, ",
+                    pretty_size(size[0], buf, sizeof(buf)));
+            fprintf(stderr, "trie = %s, ",
+                    pretty_size(size[1], buf, sizeof(buf)));
+            fprintf(stderr, "total = %s\n",
+                    pretty_size(size[0] + size[1], buf, sizeof(buf)));
+        }
+    }
+}
 // vim: ts=4 sw=4 ai et
