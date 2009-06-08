@@ -818,9 +818,12 @@ void suffix_trie::insert(const char *inputs, size_t length, value_type value)
             insert_suffix(s, p + 1, length - (p + 1 - inputs), value);
         } else {
             size_type t = trie_->next(s, basic_trie::kTerminator);
-            if (!trie_->check_transition(s, t))
+            if (trie_->check_transition(s, t)) {
+                suffix_[-trie_->base(t)] = value;
+            } else {
                 t = trie_->create_transition(s, basic_trie::kTerminator);
-            insert_suffix(t, NULL, 0, value);
+                insert_suffix(t, NULL, 0, value);
+            }
         }
     }
 }

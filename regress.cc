@@ -25,6 +25,9 @@ int main()
 		{"a", "abilities", "ability's", "about", "absence", "absence's", "absolute", "absolutely", "academic", "acceptable", NULL},
 		{"sepaled", "Septembrizers", "septemia", "septicemia", "septicemias", NULL},
 		{"abcd", "zdd", NULL},
+		{"a", "ab", "abc", "bcd", "bc", "b"},
+		{"a", "ab", "abc", "ab", "a"},
+		{"bcd", "bc", "b", "bc", "bcd"},
 		{NULL}
 	};
 
@@ -32,6 +35,7 @@ int main()
 	printf("================================================\n");
 
 /* basic_trie */
+#if 0
 	printf("\nbasic_trie\n");
 	printf("----------\n");
 	for (i = 0; dict[i][0]; i++) {
@@ -94,7 +98,7 @@ int main()
 		}
 		printf("\n");
 	}
-
+#endif
 /* double_trie */
 	printf("\ndouble_trie\n");
 	printf("----------\n");
