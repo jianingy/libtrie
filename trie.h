@@ -5,7 +5,7 @@
 
 /*
  * Reference:
- * [1] J.AOE An Efficient Digital Search Algorithm by 
+ * [1] J.AOE An Efficient Digital Search Algorithm by
  *           Using a Double-Array Structure
  * [2] J.AOE A Trie Compaction Algorithm for a Large Set of Keys
  *
@@ -34,7 +34,22 @@
 template<typename T> class trie_relocator_interface {
   public:
     virtual void relocate(T s, T t) = 0;
+    virtual ~trie_relocator_interface() {} ;
 };
+template<typename T>
+T* resize(T *ptr, size_t old_size, size_t new_size)
+{
+    T *new_block = new T[new_size];
+    if (ptr) {
+        std::copy(ptr, ptr + old_size, new_block);
+        delete []ptr;
+        memset(new_block + old_size, 0, (new_size - old_size) * sizeof(T));
+        return new_block;
+    } else {
+        memset(new_block, 0, new_size * sizeof(T));
+        return new_block;
+    }
+}    
 
 class basic_trie
 {
@@ -215,11 +230,13 @@ class basic_trie
 
     bool check_transition(size_type s, size_type t) const
     {
-        return (s > 0 && t > 0 && t < header_->size && check(t) == s)?true:false;
+        return (s > 0
+                && t > 0
+                && t < header_->size && check(t) == s)?true:false;
     }
     bool check_reverse_transition(size_type s, char_type ch) const
     {
-        return ((next(prev(s), ch) == s) 
+        return ((next(prev(s), ch) == s)
                 && check_transition(prev(s), next(prev(s), ch)));
     }
 
@@ -241,17 +258,11 @@ class basic_trie
                        const char_type *inputs,
                        const extremum_type &extremum);
 
-    void inflate(size_type size)
+    void resize_state(size_type size)
     {
         // align with 4k
         size_type nsize = (((header_->size + size) >> 12) + 1) << 12;
-        states_ = static_cast<state_type *>(realloc(states_,
-                                                  nsize * sizeof(state_type)));
-        if (!states_)
-            throw std::bad_alloc();
-        memset(states_ + header_->size,
-               0,
-               (nsize - header_->size) * sizeof(state_type));
+        states_ = resize<state_type>(states_, header_->size, nsize);
         header_->size = nsize;
     }
 
@@ -332,7 +343,7 @@ class double_trie {
     ~double_trie();
     void insert(const char *inputs, size_t length, value_type value);
     bool search(const char *inputs, size_t length, value_type *value) const;
-    void build(const char *filename);
+    void build(const char *filename, bool verbose = false);
     const basic_trie *front_trie() const
     {
         return lhs_;
@@ -343,7 +354,7 @@ class double_trie {
         return rhs_;
     }
 
-#ifndef NDEBUG    
+#ifndef NDEBUG
     void trace_table(size_type istart,
                      size_type astart) const
     {
@@ -366,7 +377,7 @@ class double_trie {
         for (i = astart; i < dsize && i < header_->accept_size; i++)
             printf("%4d ", accept_[i].accept);
         printf("\n========================================\n");
-        std::set<size_type>::const_iterator it;       
+        std::set<size_type>::const_iterator it;
         std::map<size_type, refer_type>::const_iterator mit;
         for (mit = refer_.begin(); mit != refer_.end(); mit++) {
             printf("%4d: ", mit->first);
@@ -384,7 +395,7 @@ class double_trie {
     size_type rhs_append(const char *inputs, size_t length);
     size_type lhs_insert(size_type s, const char *inputs, size_t length);
     void rhs_clean_more(size_type t);
-    void rhs_insert(size_type s, size_type r, 
+    void rhs_insert(size_type s, size_type r,
                     const char *match, size_t match_length,
                     const char *remain, size_t remain_length,
                     char ch, bool terminator, size_type value);
@@ -422,7 +433,7 @@ class double_trie {
         }
         assert(lhs_->base(s) < 0);
         refer_[t].referer.insert(s);
-        
+
         return i;
     }
 
@@ -431,7 +442,7 @@ class double_trie {
         std::map<size_type, refer_type>::const_iterator found(refer_.find(s));
         if (found == refer_.end())
             return 0;
-        else 
+        else
             return found->second.referer.size();
     }
 
@@ -449,12 +460,8 @@ class double_trie {
             }
             if (next >= header_->index_size) {
                 size_type nsize = next * 2;
-                index_ = static_cast<index_type *>
-                        (realloc(index_, nsize * sizeof(index_type)));
-                if (!index_)
-                    throw std::bad_alloc();
-                memset(index_ + header_->index_size, 0,
-                       (nsize - header_->index_size) * sizeof(index_type));
+                index_ = resize<index_type>(index_, header_->index_size, nsize);
+                assert(index_[next].index == 0);
                 header_->index_size = nsize;
             }
             lhs_->set_base(s, -next);
@@ -476,15 +483,9 @@ class double_trie {
             }
             if (next >= header_->accept_size) {
                 size_type nsize = next * 2;
-                accept_ = static_cast<accept_type *>
-                        (realloc(accept_, nsize * sizeof(accept_type)));
-                if (!accept_)
-                    throw std::bad_alloc();
-                memset(accept_ + header_->accept_size, 0,
-                       (nsize - header_->accept_size) * sizeof(accept_type));
+                accept_ = resize<accept_type>(accept_, header_->accept_size, nsize);
                 header_->accept_size = nsize;
             }
-            //printf("accept i = %d\n", i);
             index_[i].index = next;
         }
         return index_[i].index;
@@ -528,7 +529,7 @@ class double_trie {
                 refer_[r].referer.insert(t);
             }
         }
-    }    
+    }
 
     void relocate_rear(size_type s, size_type t)
     {
@@ -543,9 +544,10 @@ class double_trie {
 
     void free_accept_entry(size_type s)
     {
-        if (refer_.find(s) != refer_.end()) { // XXX: check what cause the inequivalent
+        if (refer_.find(s) != refer_.end()) {
+            // XXX: check what cause the inequivalent
             if (s > 0
-                && count_referer(s) == 0 
+                && count_referer(s) == 0
                 && refer_[s].accept_index < header_->accept_size
                 && refer_[s].accept_index > 0) {
                 accept_[refer_[s].accept_index].accept = 0;
@@ -582,6 +584,67 @@ class double_trie {
     void *mmap_;
     size_t mmap_size_;
     static char magic_[16];
+};
+
+class suffix_trie
+{
+  public:
+    typedef basic_trie::size_type size_type;
+    typedef basic_trie::value_type value_type;
+    typedef size_type suffix_type;
+    typedef struct {
+        size_type size;
+        char unused[60];
+    } header_type;
+    
+    typedef struct {
+        size_type *data;
+        size_t size;
+    } common_type;
+
+    suffix_trie();
+    ~suffix_trie();
+
+  protected:
+    void resize_suffix(size_type size)
+    {
+        // align with 4k
+        size_type nsize = (((header_->size + size) >> 12) + 1) << 12;
+        suffix_ = static_cast<suffix_type *>(realloc(suffix_,
+                                                  nsize * sizeof(suffix_type)));
+        if (!suffix_)
+            throw std::bad_alloc();
+        memset(suffix_ + header_->size,
+               0,
+               (nsize - header_->size) * sizeof(suffix_type));
+        header_->size = nsize;
+    }
+
+    void resize_common(size_type size)
+    {
+        // align with 4k
+        size_type nsize = (((common_.size + size) >> 12) + 1) << 12;
+        common_.data = static_cast<size_type *>(realloc(common_.data,
+                                                nsize * sizeof(size_type)));
+        if (!common_.data)
+            throw std::bad_alloc();
+        memset(common_.data + common_.size,
+               0,
+               (nsize - common_.size) * sizeof(size_type));
+        common_.size = nsize;
+    }
+
+    void insert_suffix(size_type s, const char *inputs, size_t length,
+                      value_type value);
+    void branch(size_type s, const char *inputs, size_t length,
+                      value_type value);
+    
+  private:
+    basic_trie *trie_;
+    suffix_type *suffix_;
+    header_type *header_;
+    size_type next_suffix_;
+    common_type common_;
 };
 
 #endif  // TRIE_H_

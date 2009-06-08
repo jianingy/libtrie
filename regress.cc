@@ -46,6 +46,47 @@ int main()
 		printf("\n");
 	}
 
+	printf("\nbasci_trie copy constructor\n");
+	printf("----------\n");
+	for (i = 0; dict[i][0]; i++) {
+		basic_trie btrie;
+		printf("wordset %d: ", i);
+		for (j = 0; dict[i][j]; j++)
+			btrie.insert(dict[i][j], length(dict[i][j]), value(j, i));
+		basic_trie ctrie(btrie);
+		for (j = 0; dict[i][j]; j++) {
+			if (ctrie.search(dict[i][j], length(dict[i][j]), &val) && val == value(j, i)) {
+				printf("[%d] ", val);
+			} else {
+				printf("\nTEST FAILED on '%s'!\n", dict[i][j]);
+				ctrie.trace(1);
+				exit(0);
+			}
+		}
+		printf("\n");
+	}
+
+	printf("\nbasci_trie operator = \n");
+	printf("----------\n");
+	for (i = 0; dict[i][0]; i++) {
+		basic_trie btrie;
+		printf("wordset %d: ", i);
+		for (j = 0; dict[i][j]; j++)
+			btrie.insert(dict[i][j], length(dict[i][j]), value(j, i));
+		basic_trie ctrie;
+		ctrie = btrie;
+		for (j = 0; dict[i][j]; j++) {
+			if (ctrie.search(dict[i][j], length(dict[i][j]), &val) && val == value(j, i)) {
+				printf("[%d] ", val);
+			} else {
+				printf("\nTEST FAILED on '%s'!\n", dict[i][j]);
+				ctrie.trace(1);
+				exit(0);
+			}
+		}
+		printf("\n");
+	}
+
 /* double_trie */
 	printf("\nbasci_trie\n");
 	printf("----------\n");
