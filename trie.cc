@@ -596,13 +596,18 @@ bool double_trie::search(const char *inputs,
                                               lhs_->base(t);
             return true;
         } else if (!check_separator(s)) {
+            assert(0);
             return false;
         }
     }
     size_type r = link_state(s);
     if (rhs_->check_reverse_transition(r, basic_trie::kTerminator))
         r = rhs_->prev(r);
-
+    if (r == 1) {
+        if (value)
+            *value = index_[-lhs_->base(s)].data;
+        return true;
+    }
     r = rhs_->go_backward(r, p, length - (p - inputs), NULL);
     r = rhs_->prev(r);
     if (r == 1) {
@@ -730,9 +735,8 @@ void suffix_trie::insert_suffix(size_type s,
 
     trie_->set_base(s, -next_suffix_);
     if (next_suffix_ + static_cast<size_type>(length) + 1 
-        >= header_->suffix_size)
+            >= header_->suffix_size)
         resize_suffix(next_suffix_ + length + 1);
-
     for (p = inputs; p < inputs + length; p++)
         suffix_[next_suffix_++] = basic_trie::char_in(*p);
     suffix_[next_suffix_++] = basic_trie::kTerminator;
@@ -781,13 +785,22 @@ void suffix_trie::branch(size_type s,
     // create twig for new suffix
     if (p < inputs + length)
         s = trie_->create_transition(t, basic_trie::char_in(*p));
+    else if (p == inputs + length)
+        s = trie_->create_transition(t, basic_trie::kTerminator);
     else
         s = t;
-    insert_suffix(s, p + 1, length - (p + 1 - inputs), value);
+    if (p < inputs + length)
+        insert_suffix(s, p + 1, length - (p + 1 - inputs), value);
+    else {
+        s = trie_->next(t, basic_trie::kTerminator);
+        if (!trie_->check_transition(t, s))
+            s = trie_->create_transition(t, basic_trie::kTerminator);
+        insert_suffix(s, NULL, 0, value);
+    }
 }
 
 
-void suffix_trie::insert(const char *inputs, size_t length, value_type val)
+void suffix_trie::insert(const char *inputs, size_t length, value_type value)
 {
     if (!inputs)
         throw std::runtime_error("suffix_trie::insert: input pointer is null");
@@ -798,11 +811,17 @@ void suffix_trie::insert(const char *inputs, size_t length, value_type val)
     s = trie_->go_forward(1, inputs, length, &p);
 
     if (trie_->base(s) < 0) {
-        branch(s, p, length - (p - inputs), val);
+        branch(s, p, length - (p - inputs), value);
     } else {
-        if (p < inputs + length)
+        if (p < inputs + length) {
             s = trie_->create_transition(s, basic_trie::char_in(*p));
-        insert_suffix(s, p + 1, length - (p + 1 - inputs), val);
+            insert_suffix(s, p + 1, length - (p + 1 - inputs), value);
+        } else {
+            size_type t = trie_->next(s, basic_trie::kTerminator);
+            if (!trie_->check_transition(s, t))
+                t = trie_->create_transition(s, basic_trie::kTerminator);
+            insert_suffix(t, NULL, 0, value);
+        }
     }
 }
 

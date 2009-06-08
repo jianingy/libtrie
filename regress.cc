@@ -38,8 +38,8 @@ int main()
 		basic_trie btrie;
 		printf("wordset %d: ", i);
 		// test for duplicated keys
-		for (j = 0; dict[i][j]; j++)
-			btrie.insert(dict[i][j], length(dict[i][j]), j + 1);
+//		for (j = 0; dict[i][j]; j++)
+//			btrie.insert(dict[i][j], length(dict[i][j]), j + 1);
 		for (j = 0; dict[i][j]; j++)
 			btrie.insert(dict[i][j], length(dict[i][j]), value(j, i));
 		for (j = 0; dict[i][j]; j++) {
@@ -102,8 +102,8 @@ int main()
 		double_trie btrie;
 		printf("wordset %d: ", i);
 		// test for duplicated keys
-		for (j = 0; dict[i][j]; j++)
-			btrie.insert(dict[i][j], length(dict[i][j]), -value(j, i) + 9);
+//		for (j = 0; dict[i][j]; j++)
+//			btrie.insert(dict[i][j], length(dict[i][j]), -value(j, i) + 9);
 		for (j = 0; dict[i][j]; j++)
 			btrie.insert(dict[i][j], length(dict[i][j]), -value(j, i) + 3);
 		for (j = 0; dict[i][j]; j++) {
@@ -157,8 +157,8 @@ int main()
 	for (i = 0; dict[i][0]; i++) {
 		suffix_trie btrie;
 		printf("wordset %d: ", i);
-		for (j = 0; dict[i][j]; j++)
-			btrie.insert(dict[i][j], length(dict[i][j]), value(j, i));
+//		for (j = 0; dict[i][j]; j++)
+//			btrie.insert(dict[i][j], length(dict[i][j]), value(j, i));
 		for (j = 0; dict[i][j]; j++)
 			btrie.insert(dict[i][j], length(dict[i][j]), -value(j, i) + 3);
 		for (j = 0; dict[i][j]; j++) {

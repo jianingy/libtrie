@@ -373,7 +373,7 @@ class double_trie: public trie_interface {
     void trace_table(size_type istart,
                      size_type astart) const
     {
-        static const size_type dsize = 40;
+        static const size_type dsize = 20;
         size_type i;
         printf("========================================");
         printf("\nSEQ     |");
@@ -474,7 +474,7 @@ class double_trie: public trie_interface {
                 ++next_index_;
             }
             if (next >= header_->index_size) {
-                size_type nsize = next * 2;
+                size_type nsize = (((next * 2) >> 12) + 1) << 12;
                 index_ = resize<index_type>(index_, header_->index_size, nsize);
                 assert(index_[next].index == 0);
                 header_->index_size = nsize;
@@ -497,7 +497,7 @@ class double_trie: public trie_interface {
                 ++next_accept_;
             }
             if (next >= header_->accept_size) {
-                size_type nsize = next * 2;
+                size_type nsize = (((next * 2) >> 12) + 1) << 12;
                 accept_ = resize<accept_type>(accept_,
                                               header_->accept_size,
                                               nsize);
