@@ -429,11 +429,24 @@ double_trie::rhs_append(const char *inputs, size_t length)
     return s;
 }
 
-basic_trie::size_type
-double_trie::lhs_insert(size_type s, const char *inputs, size_t length)
+void double_trie::lhs_insert(size_type s,
+                             const char *inputs, size_t length,
+                             value_type value)
 {
-    size_type t = lhs_->create_transition(s, basic_trie::char_in(inputs[0]));
-    return set_link(t, rhs_append(inputs + 1, length - 1));
+    size_type t;
+    if (length > 0) {
+        t = lhs_->create_transition(s, basic_trie::char_in(inputs[0]));
+        t = set_link(t, rhs_append(inputs + 1, length - 1));
+        index_[t].data = value;
+    } else {
+        t = lhs_->next(s, basic_trie::kTerminator);
+        if (!lhs_->check_transition(s, t))
+            t = lhs_->create_transition(s, basic_trie::kTerminator);
+        if (check_separator(t))
+            index_[-lhs_->base(t)].data = value;
+        else
+            lhs_->set_base(t, value);
+    }
 }
 
 void double_trie::rhs_clean_more(size_type t)
@@ -521,30 +534,22 @@ void double_trie::insert(const char *inputs, size_t length, value_type value)
     if (!inputs)
         throw std::runtime_error("double_trie::insert: input pointer is null");
 
-    size_type s, i;
+    size_type s;
     const char *p;
 
     s = lhs_->go_forward(1, inputs, length, &p);
-    if (p < inputs + length && !check_separator(s)) {
-        i = lhs_insert(s, p, length - (p - inputs));
-        index_[i].data = value;
-        return;
-    } else if (!check_separator(s)) {
-        size_type t = lhs_->next(s, basic_trie::kTerminator);
-        if (lhs_->check_transition(s, t)) {
-            if (check_separator(t))
-                index_[-lhs_->base(t)].data = value;
-            else
-                index_[t].data = value;
-        }
+    if (!check_separator(s)) {
+        lhs_insert(s, p, length - (p - inputs), value);
         return;
     }
 
+    // skip dummy terminator
     size_type r = link_state(s);
     if (rhs_->check_reverse_transition(r, basic_trie::kTerminator)
         && rhs_->prev(r) > 1)
         r = rhs_->prev(r);
 
+    // travel reversely
     char last = 0;
     bool terminator = false;
     exists_.clear();
@@ -556,22 +561,23 @@ void double_trie::insert(const char *inputs, size_t length, value_type value)
             break;
         }
     }
+
     // check for terminator
     if (p >= inputs + length &&
         rhs_->check_reverse_transition(r, basic_trie::kTerminator)) {
-        r = rhs_->prev(r);
-        exists_.append(1, basic_trie::kTerminator);
+        //r = rhs_->prev(r);
+        //exists_.append(1, basic_trie::kTerminator);
+        // key already exists
+        index_[-lhs_->base(s)].data = value;
+        return;
     } else {
         last = basic_trie::char_out(r - rhs_->base(rhs_->prev(r)));
         terminator = (r - rhs_->base(rhs_->prev(r))
                       == basic_trie::kTerminator)?true:false;
     }
 
-    if (r > 1)
-        rhs_insert(s, r, exists_.c_str(), exists_.length(),
-                   p, length - (p - inputs), last, terminator, value);
-    else
-        index_[-lhs_->base(s)].data = value;
+    rhs_insert(s, r, exists_.c_str(), exists_.length(),
+               p, length - (p - inputs), last, terminator, value);
 
     return;
 }
@@ -586,18 +592,17 @@ bool double_trie::search(const char *inputs,
     size_type s;
     const char *p;
     s = lhs_->go_forward(1, inputs, length, &p);
-    if (p < inputs + length && !check_separator(s))
-        return false;
-    if (p >= inputs + length) {
-        size_type t = lhs_->next(s, basic_trie::kTerminator);
-        if (lhs_->check_transition(s, t)) {
-            if (value)
-                *value = (check_separator(t))?index_[-lhs_->base(t)].data:
-                                              lhs_->base(t);
-            return true;
-        } else if (!check_separator(s)) {
-            assert(0);
+    if (!check_separator(s)) {
+        if (p < inputs + length) {
             return false;
+        } else  {
+            size_type t = lhs_->next(s, basic_trie::kTerminator);
+            if (lhs_->check_transition(s, t)) {
+                if (value)
+                    *value = (check_separator(t))?index_[-lhs_->base(t)].data:
+                                                  lhs_->base(t);
+                return true;
+            }
         }
     }
     size_type r = link_state(s);
@@ -772,6 +777,7 @@ void suffix_trie::branch(size_type s,
     if (p >= inputs + length
         && suffix_[suffix_start + p - inputs] == basic_trie::kTerminator) {
         suffix_[suffix_start + p - inputs + 1] = value;
+        return;
     }
 
     // insert common string into trie
@@ -789,13 +795,12 @@ void suffix_trie::branch(size_type s,
         s = trie_->create_transition(t, basic_trie::kTerminator);
     else
         s = t;
-    if (p < inputs + length)
+    if (p < inputs + length) {
         insert_suffix(s, p + 1, length - (p + 1 - inputs), value);
-    else {
+    } else {
         s = trie_->next(t, basic_trie::kTerminator);
-        if (!trie_->check_transition(t, s))
-            s = trie_->create_transition(t, basic_trie::kTerminator);
-        insert_suffix(s, NULL, 0, value);
+        if (trie_->check_transition(t, s))
+            insert_suffix(s, NULL, 0, value);
     }
 }
 

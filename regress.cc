@@ -25,9 +25,9 @@ int main()
 		{"a", "abilities", "ability's", "about", "absence", "absence's", "absolute", "absolutely", "academic", "acceptable", NULL},
 		{"sepaled", "Septembrizers", "septemia", "septicemia", "septicemias", NULL},
 		{"abcd", "zdd", NULL},
-		{"a", "ab", "abc", "bcd", "bc", "b"},
-		{"a", "ab", "abc", "ab", "a"},
-		{"bcd", "bc", "b", "bc", "bcd"},
+		//{"bcd", "bc", "b", "bc", "bcd"},
+		//{"a", "ab", "abc", "bcd", "bc", "b"},
+		//{"a", "ab", "abc", "ab", "a"},
 		{NULL}
 	};
 
@@ -35,7 +35,7 @@ int main()
 	printf("================================================\n");
 
 /* basic_trie */
-#if 0
+#if 1
 	printf("\nbasic_trie\n");
 	printf("----------\n");
 	for (i = 0; dict[i][0]; i++) {
@@ -99,22 +99,20 @@ int main()
 		printf("\n");
 	}
 #endif
+
 /* double_trie */
 	printf("\ndouble_trie\n");
 	printf("----------\n");
 	for (i = 0; dict[i][0]; i++) {
 		double_trie btrie;
 		printf("wordset %d: ", i);
-		// test for duplicated keys
-//		for (j = 0; dict[i][j]; j++)
-//			btrie.insert(dict[i][j], length(dict[i][j]), -value(j, i) + 9);
 		for (j = 0; dict[i][j]; j++)
 			btrie.insert(dict[i][j], length(dict[i][j]), -value(j, i) + 3);
 		for (j = 0; dict[i][j]; j++) {
 			if (btrie.search(dict[i][j], length(dict[i][j]), &val) && val == -value(j, i) + 3) {
 				printf("[%d] ", val);
 			} else {
-				printf("\nTEST FAILED on '%s'!\n", dict[i][j]);
+				printf("\nTEST FAILED on '%s' = %d!\n", dict[i][j], val);
 				btrie.trace_table(0, 0);
 				std::cout << "FRONT: \n";
 				btrie.front_trie()->trace(1);
@@ -161,12 +159,10 @@ int main()
 	for (i = 0; dict[i][0]; i++) {
 		suffix_trie btrie;
 		printf("wordset %d: ", i);
-//		for (j = 0; dict[i][j]; j++)
-//			btrie.insert(dict[i][j], length(dict[i][j]), value(j, i));
 		for (j = 0; dict[i][j]; j++)
-			btrie.insert(dict[i][j], length(dict[i][j]), -value(j, i) + 3);
+			btrie.insert(dict[i][j], length(dict[i][j]), -value(j, i) + 1);
 		for (j = 0; dict[i][j]; j++) {
-			if (btrie.search(dict[i][j], length(dict[i][j]), &val) && val == -value(j, i) + 3) {
+			if (btrie.search(dict[i][j], length(dict[i][j]), &val) && val == -value(j, i) + 1) {
 				printf("[%d] ", val);
 			} else {
 				printf("\nTEST FAILED on '%s'!\n", dict[i][j]);
@@ -178,13 +174,4 @@ int main()
 		}
 		printf("\n");
 	}
-/*
-		suffix_trie btrie;
-		printf("-------------------------\nset 0:");
-		btrie.insert("baby", 4, 1);
-		btrie.insert("bachelor", 8, 1);
-		std::cout << "TRIE: \n";
-		btrie.trie()->trace(1);
-		btrie.trace_suffix(0, 100);
-*/	
 }

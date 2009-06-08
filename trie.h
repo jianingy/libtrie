@@ -408,7 +408,8 @@ class double_trie: public trie_interface {
 
   protected:
     size_type rhs_append(const char *inputs, size_t length);
-    size_type lhs_insert(size_type s, const char *inputs, size_t length);
+    void lhs_insert(size_type s, const char *inputs, size_t length,
+                    value_type value);
     void rhs_clean_more(size_type t);
     void rhs_insert(size_type s, size_type r,
                     const char *match, size_t match_length,
