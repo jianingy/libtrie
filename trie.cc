@@ -711,10 +711,10 @@ suffix_trie::~suffix_trie()
 {
     if (!mmap_) {
         sanity_delete(header_);
-        sanity_delete(trie_);
         sanity_delete_array(suffix_);
         sanity_delete_array(common_.data);
     }
+    sanity_delete(trie_);
 }
 
 void suffix_trie::insert_suffix(size_type s,
