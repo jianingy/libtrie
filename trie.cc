@@ -729,7 +729,8 @@ void suffix_trie::insert_suffix(size_type s,
     const char *p;
 
     trie_->set_base(s, -next_suffix_);
-    if (next_suffix_ + length + 1 >= header_->suffix_size)
+    if (next_suffix_ + static_cast<size_type>(length) + 1 
+        >= header_->suffix_size)
         resize_suffix(next_suffix_ + length + 1);
 
     for (p = inputs; p < inputs + length; p++)

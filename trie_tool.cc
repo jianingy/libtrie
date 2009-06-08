@@ -9,15 +9,18 @@
 #include "trie.h"
 
 static void *
-query_trie(const char *query, const char *index, int trie_type, bool verbose)
+query_trie(const char *query, const char *index, bool verbose)
 {
     trie_interface *trie;
     int retval = 0;
     int value;
-    if (trie_type == 1)
+    int trie_type = 0;
+    try {
         trie = new suffix_trie(index);
-    else
+        trie_type = 1;
+    } catch (...) {
         trie = new double_trie(index);
+    }
 
     if (trie->search(query, strlen(query), &value)) {
         printf("%d\n", value);
@@ -52,7 +55,7 @@ build_trie(const char *source, const char *index, int trie_type, bool verbose)
 
         if (verbose)
             fprintf(stderr, "building");
-        snprintf(fmt, LINE_MAX, "%%d %%%d[^\n] ", LINE_MAX, LINE_MAX);
+        snprintf(fmt, LINE_MAX, "%%d %%%d[^\n] ", LINE_MAX);
         while (!feof(file)) {
             if (verbose && lineno > 0) {
                 if (lineno % 500 == 0)
@@ -75,7 +78,7 @@ build_trie(const char *source, const char *index, int trie_type, bool verbose)
         if (verbose)
             fprintf(stderr, "...done\n");
     } else {
-        perror("build_trie:");
+        perror("build_trie");
         exit(-1);
     }
 
@@ -153,7 +156,7 @@ int main(int argc, char *argv[])
         if (source)
             build_trie(source, index, trie_type, verbose);
         else if (query)
-            query_trie(query, index, trie_type, verbose);
+            query_trie(query, index, verbose);
     }
     help_message();
 
