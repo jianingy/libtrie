@@ -27,7 +27,7 @@ int main()
 	printf("================================================\n");
 
 /* basic_trie */
-	printf("\nbasci_trie\n");
+	printf("\nbasic_trie\n");
 	printf("----------\n");
 	for (i = 0; dict[i][0]; i++) {
 		basic_trie btrie;
@@ -46,7 +46,7 @@ int main()
 		printf("\n");
 	}
 
-	printf("\nbasci_trie copy constructor\n");
+	printf("\nbasic_trie copy constructor\n");
 	printf("----------\n");
 	for (i = 0; dict[i][0]; i++) {
 		basic_trie btrie;
@@ -66,7 +66,7 @@ int main()
 		printf("\n");
 	}
 
-	printf("\nbasci_trie operator = \n");
+	printf("\nbasic_trie operator = \n");
 	printf("----------\n");
 	for (i = 0; dict[i][0]; i++) {
 		basic_trie btrie;
@@ -88,7 +88,7 @@ int main()
 	}
 
 /* double_trie */
-	printf("\nbasci_trie\n");
+	printf("\nbasic_trie\n");
 	printf("----------\n");
 	for (i = 0; dict[i][0]; i++) {
 		double_trie btrie;
