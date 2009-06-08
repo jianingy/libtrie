@@ -613,13 +613,7 @@ class suffix_trie
     {
         // align with 4k
         size_type nsize = (((header_->size + size) >> 12) + 1) << 12;
-        suffix_ = static_cast<suffix_type *>(realloc(suffix_,
-                                                  nsize * sizeof(suffix_type)));
-        if (!suffix_)
-            throw std::bad_alloc();
-        memset(suffix_ + header_->size,
-               0,
-               (nsize - header_->size) * sizeof(suffix_type));
+        suffix_ = resize<suffix_type>(suffix_, header_->size, nsize);
         header_->size = nsize;
     }
 
@@ -627,13 +621,7 @@ class suffix_trie
     {
         // align with 4k
         size_type nsize = (((common_.size + size) >> 12) + 1) << 12;
-        common_.data = static_cast<size_type *>(realloc(common_.data,
-                                                nsize * sizeof(size_type)));
-        if (!common_.data)
-            throw std::bad_alloc();
-        memset(common_.data + common_.size,
-               0,
-               (nsize - common_.size) * sizeof(size_type));
+        common_.data = resize<size_type>(common_.data, common_.size, nsize);
         common_.size = nsize;
     }
 

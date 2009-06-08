@@ -517,9 +517,16 @@ void double_trie::insert(const char *inputs, size_t length, value_type value)
         i = lhs_insert(s, p, length - (p - inputs));
         index_[i].data = value;
         return;
-    }
-    if (p >= inputs + length)
+    } else if (!check_separator(s)) {
+        size_type t = lhs_->next(s, basic_trie::kTerminator);
+        if (lhs_->check_transition(s, t)) {
+            if (check_separator(t))
+                index_[-lhs_->base(t)].data = value;
+            else
+                index_[t].data = value;
+        }
         return;
+    }
 
     size_type r = link_state(s);
     if (rhs_->check_reverse_transition(r, basic_trie::kTerminator)
@@ -548,8 +555,12 @@ void double_trie::insert(const char *inputs, size_t length, value_type value)
                       == basic_trie::kTerminator)?true:false;
     }
 
-    rhs_insert(s, r, exists_.c_str(), exists_.length(),
-               p, length - (p - inputs), last, terminator, value);
+    if (r > 1)
+        rhs_insert(s, r, exists_.c_str(), exists_.length(),
+                   p, length - (p - inputs), last, terminator, value);
+    else
+        index_[-lhs_->base(s)].data = value;
+
     return;
 }
 
@@ -682,6 +693,7 @@ void suffix_trie::branch(size_type s,
                     && suffix_[suffix_start + p - inputs] == *p; p++) {
        *(cp++) = basic_trie::char_in(*p);
     }
+//    if (*cp == basic_trie::kTerminator)
 }
 
 // vim: ts=4 sw=4 ai et
