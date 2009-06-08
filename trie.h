@@ -596,8 +596,9 @@ class suffix_trie
     typedef basic_trie::value_type value_type;
     typedef size_type suffix_type;
     typedef struct {
-        size_type size;
-        char unused[60];
+        char magic[16];
+        size_type suffix_size;
+        char unused[44];
     } header_type;
 
     typedef struct {
@@ -607,14 +608,35 @@ class suffix_trie
 
     suffix_trie();
     ~suffix_trie();
+    void insert(const char *inputs, size_t length, value_type val);
+    bool search(const char *inputs, size_t length, value_type *value);
+
+    const basic_trie *trie()
+    {
+        return trie_;
+    }
+
+    void trace_suffix(size_type start, size_type count)
+    {
+        size_type i;
+        for (i = start; i < header_->suffix_size && i < count; i++) {
+            if (suffix_[i] == basic_trie::kTerminator)
+                printf("[%d:#]", i);
+            else if (isgraph(basic_trie::char_out(suffix_[i]))) 
+                printf("[%d:%c]", i, basic_trie::char_out(suffix_[i]));
+            else
+                printf("[%d:%x]", i, suffix_[i]);
+        }
+        printf("\n");
+    }
 
   protected:
     void resize_suffix(size_type size)
     {
         // align with 4k
-        size_type nsize = (((header_->size + size) >> 12) + 1) << 12;
-        suffix_ = resize<suffix_type>(suffix_, header_->size, nsize);
-        header_->size = nsize;
+        size_type nsize = (((header_->suffix_size + size) >> 12) + 1) << 12;
+        suffix_ = resize<suffix_type>(suffix_, header_->suffix_size, nsize);
+        header_->suffix_size = nsize;
     }
 
     void resize_common(size_type size)

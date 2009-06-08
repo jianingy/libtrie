@@ -235,6 +235,9 @@ bool basic_trie::search(const char *inputs,
                         size_t length,
                         value_type *value) const
 {
+    if (!inputs)
+        throw std::runtime_error("basic_trie::search: input pointer is null");
+
     size_type s = go_forward(1, inputs, length, NULL);
     size_type t = next(s, kTerminator);
 
@@ -271,7 +274,7 @@ void basic_trie::trace(size_type s) const
                     std::cerr << "-#->";
                 } else {
                     char ch = char_out(*it - obase);
-                    if (isalnum(ch))
+                    if (isgraph(ch))
                         std::cerr << "-'" << ch << "'->";
                     else
                         std::cerr << "-<" << std::hex
@@ -510,8 +513,12 @@ void double_trie::rhs_insert(size_type s, size_type r,
 
 void double_trie::insert(const char *inputs, size_t length, value_type value)
 {
+    if (!inputs)
+        throw std::runtime_error("double_trie::insert: input pointer is null");
+
     size_type s, i;
     const char *p;
+
     s = lhs_->go_forward(1, inputs, length, &p);
     if (p < inputs + length && !check_separator(s)) {
         i = lhs_insert(s, p, length - (p - inputs));
@@ -568,6 +575,9 @@ bool double_trie::search(const char *inputs,
                          size_t length,
                          value_type *value) const
 {
+    if (!inputs)
+        throw std::runtime_error("basic_trie::search: input pointer is null");
+
     size_type s;
     const char *p;
     s = lhs_->go_forward(1, inputs, length, &p);
@@ -647,10 +657,12 @@ void double_trie::build(const char *filename, bool verbose)
 // ************************************************************************
 
 suffix_trie::suffix_trie()
-    :trie_(NULL), suffix_(NULL), header_(NULL), next_suffix_(0)
+    :trie_(NULL), suffix_(NULL), header_(NULL), next_suffix_(1)
 {
     trie_ = new basic_trie();
     header_ = new header_type();
+    memset(&common_, 0, sizeof(common_));
+    resize_suffix(256);
 }
 
 suffix_trie::~suffix_trie()
@@ -668,7 +680,7 @@ void suffix_trie::insert_suffix(size_type s,
     const char *p;
 
     trie_->set_base(s, -next_suffix_);
-    if (next_suffix_ + length + 1 >= header_->size)
+    if (next_suffix_ + length + 1 >= header_->suffix_size)
         resize_suffix(next_suffix_ + length + 1);
 
     for (p = inputs; p < inputs + length; p++)
@@ -682,18 +694,94 @@ void suffix_trie::branch(size_type s,
                          size_t length,
                          value_type value)
 {
-    size_type suffix_start = trie_->base(s);
+    size_type suffix_start = -trie_->base(s);
     const char *p;
     size_type *cp;
 
-    if (length + 1 < common_.size)
+    // find common string
+    if (length + 1 >= common_.size)
         resize_common(length + 1);
-
     for (p = inputs, cp = common_.data; p < inputs + length
-                    && suffix_[suffix_start + p - inputs] == *p; p++) {
+                    && suffix_[suffix_start + p - inputs] 
+                       == basic_trie::char_in(*p); p++)
        *(cp++) = basic_trie::char_in(*p);
+    *cp = 0; 
+    
+    if (p >= inputs + length
+        && suffix_[suffix_start + p - inputs] == basic_trie::kTerminator) {
+        suffix_[suffix_start + p - inputs + 1] = value;
     }
-//    if (*cp == basic_trie::kTerminator)
+
+    // insert common string into trie
+    size_type t = s;
+    for (cp = common_.data; *cp; cp++)
+        t = trie_->create_transition(t, *cp);
+    // create twig for old suffix
+    s = trie_->create_transition(t, *(suffix_ + suffix_start + (p - inputs)));
+    trie_->set_base(s, -(suffix_start + p - inputs + 1));
+    // create twig for new suffix
+    if (p < inputs + length)
+        s = trie_->create_transition(t, basic_trie::char_in(*p));
+    else
+        s = t;
+    insert_suffix(s, p + 1, length - (p + 1 - inputs), value);
+}
+
+
+void suffix_trie::insert(const char *inputs, size_t length, value_type val)
+{
+    if (!inputs)
+        throw std::runtime_error("suffix_trie::insert: input pointer is null");
+
+    size_type s;
+    const char *p;
+
+    s = trie_->go_forward(1, inputs, length, &p);
+
+    if (trie_->base(s) < 0) {
+        branch(s, p, length - (p - inputs), val);
+    } else {
+        if (p < inputs + length)
+            s = trie_->create_transition(s, basic_trie::char_in(*p));
+        insert_suffix(s, p + 1, length - (p + 1 - inputs), val);
+    }
+}
+
+bool suffix_trie::search(const char *inputs, size_t length, value_type *value)
+{
+    if (!inputs)
+        throw std::runtime_error("suffix_trie::search: input pointer is null");
+
+    size_type s;
+    const char *p;
+
+    s = trie_->go_forward(1, inputs, length, &p);
+    if (trie_->base(s) > 0) {
+        size_type t;
+        t = trie_->next(s, basic_trie::kTerminator);
+        if (trie_->check_transition(s, t))
+            s = t;
+        else
+            return false;
+    }    
+    if (trie_->base(s) < 0) {
+        size_type len = length - (p - inputs);
+        size_type start;
+
+        for (start = -trie_->base(s); p < inputs + length; p++, start++) {
+            if (basic_trie::char_in(*p) != suffix_[start])
+                return false;
+        }
+        if (value) {
+            if (suffix_[-trie_->base(s) + len] == basic_trie::kTerminator)
+                *value = suffix_[-trie_->base(s) + len + 1];
+            else
+                *value = suffix_[-trie_->base(s)];
+        }
+        return true;
+    } else {
+        return false;
+    }
 }
 
 // vim: ts=4 sw=4 ai et
