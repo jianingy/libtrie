@@ -603,6 +603,7 @@ bool double_trie::search(const char *inputs,
                                                   lhs_->base(t);
                 return true;
             }
+            return false;
         }
     }
     size_type r = link_state(s);
