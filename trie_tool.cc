@@ -73,10 +73,10 @@ build_trie(const char *source, const char *index, int trie_type, bool verbose)
             trie->insert(key, strlen(key), val);
         }
         if (verbose)
-            fprintf(stderr, "...%d...saving", lineno);
-        trie->build(index);
+            fprintf(stderr, "...%d\nsaving to disk...\n", lineno);
+        trie->build(index, verbose);
         if (verbose)
-            fprintf(stderr, "...done\n");
+            fprintf(stderr, "done.\n");
     } else {
         perror("build_trie");
         exit(-1);
