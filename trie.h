@@ -23,6 +23,7 @@
 #include <string.h>
 #include <stdio.h>
 
+#include <algorithm>
 #include <stdexcept>
 #include <vector>
 #include <cassert>
@@ -34,7 +35,7 @@
 template<typename T> class trie_relocator_interface {
   public:
     virtual void relocate(T s, T t) = 0;
-    virtual ~trie_relocator_interface() {} ;
+    virtual ~trie_relocator_interface() {}
 };
 template<typename T>
 T* resize(T *ptr, size_t old_size, size_t new_size)
@@ -49,7 +50,7 @@ T* resize(T *ptr, size_t old_size, size_t new_size)
         memset(new_block, 0, new_size * sizeof(T));
         return new_block;
     }
-}    
+}
 
 class basic_trie
 {
@@ -483,7 +484,9 @@ class double_trie {
             }
             if (next >= header_->accept_size) {
                 size_type nsize = next * 2;
-                accept_ = resize<accept_type>(accept_, header_->accept_size, nsize);
+                accept_ = resize<accept_type>(accept_,
+                                              header_->accept_size,
+                                              nsize);
                 header_->accept_size = nsize;
             }
             index_[i].index = next;
@@ -596,7 +599,7 @@ class suffix_trie
         size_type size;
         char unused[60];
     } header_type;
-    
+
     typedef struct {
         size_type *data;
         size_t size;
@@ -638,7 +641,7 @@ class suffix_trie
                       value_type value);
     void branch(size_type s, const char *inputs, size_t length,
                       value_type value);
-    
+
   private:
     basic_trie *trie_;
     suffix_type *suffix_;

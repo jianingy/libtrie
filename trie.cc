@@ -14,7 +14,7 @@
         delete [](X); \
         (X) = NULL; \
     }} while (0);
-    
+
 
 char double_trie::magic_[16] = "TWO_TRIE";
 
@@ -26,9 +26,11 @@ static const char* pretty_size(size_t size, char *buf, size_t buflen)
 {
     assert(buf);
     if (size > 1024 * 1024 * 1024) {
-        snprintf(buf, buflen, "%4.2fG", static_cast<double>(size) / (1024 * 1024 * 1024));
+        snprintf(buf, buflen, "%4.2fG", 
+                 static_cast<double>(size) / (1024 * 1024 * 1024));
     } else if (size > 1024 * 1024) {
-        snprintf(buf, buflen, "%4.2fM", static_cast<double>(size) / (1024 * 1024));
+        snprintf(buf, buflen, "%4.2fM",
+                 static_cast<double>(size) / (1024 * 1024));
     } else if (size > 1024) {
         snprintf(buf, buflen, "%4.2fK", static_cast<double>(size) / 1024);
     } else {
@@ -614,7 +616,7 @@ void double_trie::build(const char *filename, bool verbose)
             size[2] = sizeof(basic_trie::state_type) * lhs_->header()->size;
             size[3] = sizeof(basic_trie::state_type) * rhs_->header()->size;
 
-            fprintf(stderr, "index = %s, ", 
+            fprintf(stderr, "index = %s, ",
                     pretty_size(size[0], buf, sizeof(buf)));
             fprintf(stderr, "accept = %s, ",
                     pretty_size(size[1], buf, sizeof(buf)));
@@ -623,7 +625,7 @@ void double_trie::build(const char *filename, bool verbose)
             fprintf(stderr, "rear = %s, ",
                     pretty_size(size[3], buf, sizeof(buf)));
             fprintf(stderr, "total = %s\n",
-                    pretty_size(size[0] + size[1] + size[2] + size[3], 
+                    pretty_size(size[0] + size[1] + size[2] + size[3],
                                 buf, sizeof(buf)));
         }
     }
@@ -633,8 +635,8 @@ void double_trie::build(const char *filename, bool verbose)
 // * Implementation of suffix trie                                        *
 // ************************************************************************
 
-suffix_trie::suffix_trie():
-    trie_(NULL), suffix_(NULL), header_(NULL), next_suffix_(0)
+suffix_trie::suffix_trie()
+    :trie_(NULL), suffix_(NULL), header_(NULL), next_suffix_(0)
 {
     trie_ = new basic_trie();
     header_ = new header_type();
@@ -676,7 +678,7 @@ void suffix_trie::branch(size_type s,
     if (length + 1 < common_.size)
         resize_common(length + 1);
 
-    for (p = inputs, cp = common_.data; p < inputs + length 
+    for (p = inputs, cp = common_.data; p < inputs + length
                     && suffix_[suffix_start + p - inputs] == *p; p++) {
        *(cp++) = basic_trie::char_in(*p);
     }
