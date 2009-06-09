@@ -53,6 +53,7 @@ template<typename T> class trie_relocator_interface {
     virtual void relocate(T s, T t) = 0;
     virtual ~trie_relocator_interface() {}
 };
+
 template<typename T>
 T* resize(T *ptr, size_t old_size, size_t new_size)
 {
@@ -68,12 +69,75 @@ T* resize(T *ptr, size_t old_size, size_t new_size)
     }
 }
 
+class trie_input_converter
+{
+  public:
+    typedef trie_interface::size_type size_type;
+    typedef trie_interface::char_type char_type;
+
+    static const char_type kCharsetSize = 257;
+    static const char_type kTerminator = kCharsetSize;
+
+    explicit trie_input_converter(size_t length = 8)
+        :inside_(NULL), inside_size_(0)
+    {
+        if (length)
+            resize_inside(length);
+    }
+
+    ~trie_input_converter()
+    {
+        delete []inside_;
+        inside_ = NULL;
+        inside_size_ = 0;
+    }
+
+    static char_type char_in(const char ch)
+    {
+        return static_cast<unsigned char>(ch + 1);
+    }
+
+    static char char_out(char_type ch)
+    {
+        return static_cast<char>(ch - 1);
+    }
+
+    const char_type *convert(const char *inputs,
+                             size_t length)
+    {
+        size_t i;
+
+        if (length > inside_size_)
+            resize_inside(length + 1);
+        for (i = 0; i < length; i++)
+            inside_[i] = char_in(inputs[i]); 
+        inside_[i] = kTerminator;
+
+        return inside_;
+    }
+
+  protected:
+    void resize_inside(size_type size)
+    {
+        // align with 4k
+        size_type nsize = (((inside_size_ + size) >> 12) + 1) << 12;
+        inside_ = resize<char_type>(inside_, inside_size_, nsize);
+        inside_size_ = nsize;
+    }
+  private:
+    char_type *inside_;
+    size_t inside_size_;
+};
+
 class basic_trie
 {
   public:
     typedef trie_interface::value_type value_type;
     typedef trie_interface::size_type size_type;
     typedef trie_interface::char_type char_type;
+
+    static const char_type kCharsetSize = trie_input_converter::kCharsetSize;
+    static const char_type kTerminator = trie_input_converter::kTerminator;
 
     typedef struct {
         size_type base;
@@ -91,9 +155,6 @@ class basic_trie
         char_type min;
     } extremum_type;
 
-    static const char_type kCharsetSize = 257;
-    static const char_type kTerminator = kCharsetSize;
-
     explicit basic_trie(size_type size = 1024,
                         trie_relocator_interface<size_type> *relocator = NULL);
     explicit basic_trie(void *header, void *states);
@@ -101,8 +162,8 @@ class basic_trie
     void clone(const basic_trie &trie);
     basic_trie &operator=(const basic_trie &trie);
     ~basic_trie();
-    void insert(const char *inputs, size_t length, value_type val);
-    bool search(const char *inputs, size_t length, value_type *value) const;
+    void insert(const char *key, size_t length, value_type value);
+    bool search(const char *key, size_t length, value_type *value) const;
     size_type create_transition(size_type s, char_type ch);
     size_type find_base(const char_type *inputs,
                         const extremum_type &extremum);
@@ -157,78 +218,40 @@ class basic_trie
     // Go forward from state s with inputs, returns the last
     // states and the mismatch position by pointer
     size_type go_forward(size_type s,
-                         const char *inputs,
-                         size_t length,
-                         const char **mismatch) const
+                         const char_type *inputs,
+                         const char_type **mismatch) const
     {
-        const char *p;
-        for (p = inputs; p < inputs + length; p++) {
-            char_type ch = char_in(*p);
-            size_type t = next(s, ch);
-            if (!check_transition(s, t))
-                break;
+        assert(mismatch);
+        const char_type *p = inputs;
+        do {
+            size_type t = next(s, *p);
+            if (!check_transition(s, t)) {
+                *mismatch = p;
+                return s;
+            }
             s = t;
-        }
-        if (mismatch)
-            *mismatch = p;
-        return s;
-    }
-
-    size_type go_forward_reverse(size_type s,
-                                 const char *inputs,
-                                 size_t length,
-                                 const char **mismatch) const
-    {
-        const char *p;
-        for (p = inputs + length - 1; p >= inputs; p--) {
-            char_type ch = char_in(*p);
-            size_type t = next(s, ch);
-            if (!check_transition(s, t))
-                break;
-            s = t;
-        }
-        if (mismatch)
-            *mismatch = p;
+        } while (*p++ != kTerminator);
+        *mismatch = NULL;
         return s;
     }
 
     // Go backward from state s with inputs, returns the last
     // states and the mismatch position by pointer
     size_type go_backward(size_type s,
-                          const char *inputs,
-                          size_t length,
-                          const char **mismatch) const
+                          const char_type *inputs,
+                          const char_type **mismatch) const
     {
-        const char *p;
-        for (p = inputs; p < inputs + length; p++) {
-            char_type ch = char_in(*p);
+        assert(mismatch);
+        const char_type *p = inputs;
+        do {
             size_type t = prev(s);
-            if (!check_transition(t, next(t, ch)))
-                break;
+            if (!check_transition(t, next(t, *p))) {
+                *mismatch = p;
+                return s;
+            }
             s = t;
-        }
-        if (mismatch)
-            *mismatch = p;
-
-        return s;
-    }
-
-    size_type go_backward_reverse(size_type s,
-                                  const char *inputs,
-                                  size_t length,
-                                  const char **mismatch) const
-    {
-        const char *p;
-        for (p = inputs + length - 1; p >= inputs; p--) {
-            char_type ch = char_in(*p);
-            size_type t = prev(s);
-            if (!check_transition(t, next(t, ch)))
-                break;
-            s = t;
-        }
-        if (mismatch)
-            *mismatch = p;
-
+        } while (*p++ != kTerminator);
+        *mismatch = NULL;
         return s;
     }
 
@@ -259,16 +282,6 @@ class basic_trie
                 && check_transition(prev(s), next(prev(s), ch)));
     }
 
-    static char_type char_in(const char ch)
-    {
-        return static_cast<unsigned char>(ch + 1);
-    }
-
-    static char char_out(char_type ch)
-    {
-        return static_cast<char>(ch - 1);
-    }
-
   protected:
     size_type relocate(size_type stand,
                        size_type s,
@@ -293,7 +306,9 @@ class basic_trie
         char_type ch;
         char_type *p;
 
-        for (ch = 1, p = targets; ch < kCharsetSize + 1; ch++) {
+        for (ch = 1, p = targets;
+            ch < trie_input_converter::kCharsetSize + 1;
+            ch++) {
             size_type t = next(s, ch);
             if (t >= header_->size)
                 break;
@@ -318,8 +333,9 @@ class basic_trie
     size_type last_base_;
     bool owner_;
     trie_relocator_interface<size_type> *relocator_;
+    mutable trie_input_converter converter_;
 };
-
+#if 0
 template<typename T>
 class trie_relocator: public trie_relocator_interface<basic_trie::size_type> {
   public:
@@ -605,6 +621,7 @@ class double_trie: public trie_interface {
     size_t mmap_size_;
     static const char magic_[16];
 };
+#endif
 
 class single_trie: public trie_interface
 {
@@ -627,8 +644,8 @@ class single_trie: public trie_interface
     single_trie();
     explicit single_trie(const char *filename);
     ~single_trie();
-    void insert(const char *inputs, size_t length, value_type val);
-    bool search(const char *inputs, size_t length, value_type *value) const;
+    void insert(const char *key, size_t length, value_type value);
+    bool search(const char *key, size_t length, value_type *value) const;
     void build(const char *filename, bool verbose);
 
     const basic_trie *trie()
@@ -647,8 +664,8 @@ class single_trie: public trie_interface
         for (i = start; i < header_->suffix_size && i < count; i++) {
             if (suffix_[i] == basic_trie::kTerminator)
                 printf("[%d:#]", i);
-            else if (isgraph(basic_trie::char_out(suffix_[i])))
-                printf("[%d:%c]", i, basic_trie::char_out(suffix_[i]));
+            else if (isgraph(trie_input_converter::char_out(suffix_[i])))
+                printf("[%d:%c]", i, trie_input_converter::char_out(suffix_[i]));
             else
                 printf("[%d:%x]", i, suffix_[i]);
         }
@@ -672,10 +689,8 @@ class single_trie: public trie_interface
         common_.size = nsize;
     }
 
-    void insert_suffix(size_type s, const char *inputs, size_t length,
-                      value_type value);
-    void branch(size_type s, const char *inputs, size_t length,
-                      value_type value);
+    void insert_suffix(size_type s, const char_type *inputs, value_type value);
+    void create_branch(size_type s, const char_type *inputs, value_type value);
 
   private:
     basic_trie *trie_;
@@ -686,8 +701,8 @@ class single_trie: public trie_interface
     void *mmap_;
     size_t mmap_size_;
     static const char magic_[16];
+    mutable trie_input_converter converter_;
 };
-
 #endif  // TRIE_H_
 
 // vim: ts=4 sw=4 ai et

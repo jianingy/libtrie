@@ -17,6 +17,7 @@ int main()
 	size_t i, j;
 	basic_trie::value_type val;
 	const char *dict[][256] = {
+		{"abc", "def"},
 		{"baby", "bachelor", "back", "badge", "badger", "badness", "bcs"},
 		{"in", "inspiration", "instant", "instrument", "prevision", "precession", "procession", "provision", NULL},
 		{"moldy","molochize","Molochize","molochized","Molochize's","monarchize", NULL},
@@ -91,7 +92,7 @@ int main()
 		}
 		printf("\n");
 	}
-
+#if 0
 /* double_trie */
 	printf("\ndouble_trie\n");
 	printf("----------\n");
@@ -140,7 +141,7 @@ int main()
 		}
 		printf("\n");
 	} while (0);
-
+#endif
 /* single_trie */
 	printf("\nsingle_trie\n");
 	printf("----------\n");
@@ -153,7 +154,7 @@ int main()
 			if (btrie.search(dict[i][j], length(dict[i][j]), &val) && val == signed_value(j, i)) {
 				printf("[%d] ", val);
 			} else {
-				printf("\nTEST FAILED on '%s'!\n", dict[i][j]);
+				printf("\nTEST FAILED on '%s' = %d!\n", dict[i][j], val);
 				std::cout << "TRIE: \n";
 				btrie.trie()->trace(1);
 				btrie.trace_suffix(0, 100);
