@@ -168,9 +168,7 @@ class basic_trie
     size_type find_base(const char_type *inputs,
                         const extremum_type &extremum);
 
-#ifndef NDEBUG
     void trace(size_type s) const;
-#endif
 
     static const basic_trie *create_from_memory(void *header,
                                                 void *states)
@@ -231,6 +229,26 @@ class basic_trie
             }
             s = t;
         } while (*p++ != kTerminator);
+        *mismatch = NULL;
+        return s;
+    }
+
+    size_type go_forward_reverse(size_type s,
+                                 const char_type *inputs,
+                                 const char_type **mismatch) const
+    {
+        assert(mismatch);
+        const char_type *p = inputs;
+        while (*p != kTerminator)
+            p++;
+        do {
+            size_type t = next(s, *p);
+            if (!check_transition(s, t)) {
+                *mismatch = p;
+                return s;
+            }
+            s = t;
+        } while (p-- > inputs);
         *mismatch = NULL;
         return s;
     }
@@ -335,7 +353,7 @@ class basic_trie
     trie_relocator_interface<size_type> *relocator_;
     mutable trie_input_converter converter_;
 };
-#if 0
+
 template<typename T>
 class trie_relocator: public trie_relocator_interface<basic_trie::size_type> {
   public:
@@ -374,8 +392,8 @@ class double_trie: public trie_interface {
     double_trie();
     explicit double_trie(const char *filename);
     ~double_trie();
-    void insert(const char *inputs, size_t length, value_type value);
-    bool search(const char *inputs, size_t length, value_type *value) const;
+    void insert(const char *key, size_t length, value_type value);
+    bool search(const char *key, size_t length, value_type *value) const;
     void build(const char *filename, bool verbose = false);
     const basic_trie *front_trie() const
     {
@@ -387,7 +405,6 @@ class double_trie: public trie_interface {
         return rhs_;
     }
 
-#ifndef NDEBUG
     void trace_table(size_type istart,
                      size_type astart) const
     {
@@ -422,17 +439,14 @@ class double_trie: public trie_interface {
         }
         fprintf(stderr,"========================================\n");
     }
-#endif
 
   protected:
-    size_type rhs_append(const char *inputs, size_t length);
-    void lhs_insert(size_type s, const char *inputs, size_t length,
-                    value_type value);
+    size_type rhs_append(const char_type *inputs);
+    void lhs_insert(size_type s, const char_type *inputs, value_type value);
     void rhs_clean_more(size_type t);
-    void rhs_insert(size_type s, size_type r,
-                    const char *match, size_t match_length,
-                    const char *remain, size_t remain_length,
-                    char ch, bool terminator, size_type value);
+    void rhs_insert(size_type s, size_type r, 
+                    const std::vector<char_type> &match,
+                    const char_type *remain, char_type ch, size_type value);
 
     void remove_accept_state(size_type s)
     {
@@ -611,7 +625,7 @@ class double_trie: public trie_interface {
     index_type *index_;
     accept_type *accept_;
     std::map<size_type, refer_type> refer_;
-    std::string exists_;
+    std::vector<char_type> exists_;
     size_type next_accept_, next_index_;
     trie_relocator<double_trie> *front_relocator_, *rear_relocator_;
     size_type stand_;
@@ -620,8 +634,8 @@ class double_trie: public trie_interface {
     void *mmap_;
     size_t mmap_size_;
     static const char magic_[16];
+    mutable trie_input_converter converter_;
 };
-#endif
 
 class single_trie: public trie_interface
 {

@@ -92,7 +92,7 @@ int main()
 		}
 		printf("\n");
 	}
-#if 0
+
 /* double_trie */
 	printf("\ndouble_trie\n");
 	printf("----------\n");
@@ -141,7 +141,7 @@ int main()
 		}
 		printf("\n");
 	} while (0);
-#endif
+
 /* single_trie */
 	printf("\nsingle_trie\n");
 	printf("----------\n");
