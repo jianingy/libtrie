@@ -13,7 +13,7 @@ query_trie(const char *query, const char *index, bool verbose)
 {
     trie_interface *trie;
     int retval = 0;
-    int value;
+    trie_interface::value_type value;
     int trie_type = 0;
     try {
         trie = new single_trie(index);

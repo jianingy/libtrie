@@ -9,15 +9,13 @@
 
 
 #define length(x) (strlen(x))
-//#define value(x, y) (int)(7919/(x * x + y + 1))
-#define value(x, y) (int)(j + 1)
-
-
+#define unsigned_value(x, y) (unsigned int)(j + 1)
+#define signed_value(x, y) (int)(3 - j)
 
 int main()
 {
 	size_t i, j;
-	int val;
+	basic_trie::value_type val;
 	const char *dict[][256] = {
 		{"baby", "bachelor", "back", "badge", "badger", "badness", "bcs"},
 		{"in", "inspiration", "instant", "instrument", "prevision", "precession", "procession", "provision", NULL},
@@ -25,9 +23,8 @@ int main()
 		{"a", "abilities", "ability's", "about", "absence", "absence's", "absolute", "absolutely", "academic", "acceptable", NULL},
 		{"sepaled", "Septembrizers", "septemia", "septicemia", "septicemias", NULL},
 		{"abcd", "zdd", NULL},
-		//{"bcd", "bc", "b", "bc", "bcd"},
-		//{"a", "ab", "abc", "bcd", "bc", "b"},
-		//{"a", "ab", "abc", "ab", "a"},
+		{"bcd", "bc", "b"},
+		{"a", "ab", "abc"},
 		{NULL}
 	};
 
@@ -35,19 +32,15 @@ int main()
 	printf("================================================\n");
 
 /* basic_trie */
-#if 1
 	printf("\nbasic_trie\n");
 	printf("----------\n");
 	for (i = 0; dict[i][0]; i++) {
 		basic_trie btrie;
 		printf("wordset %d: ", i);
-		// test for duplicated keys
-//		for (j = 0; dict[i][j]; j++)
-//			btrie.insert(dict[i][j], length(dict[i][j]), j + 1);
 		for (j = 0; dict[i][j]; j++)
-			btrie.insert(dict[i][j], length(dict[i][j]), value(j, i));
+			btrie.insert(dict[i][j], length(dict[i][j]), unsigned_value(j, i));
 		for (j = 0; dict[i][j]; j++) {
-			if (btrie.search(dict[i][j], length(dict[i][j]), &val) && val == value(j, i)) {
+			if (btrie.search(dict[i][j], length(dict[i][j]), &val) && val == unsigned_value(j, i)) {
 				printf("[%d] ", val);
 			} else {
 				printf("\nTEST FAILED on '%s'!\n", dict[i][j]);
@@ -64,10 +57,10 @@ int main()
 		basic_trie btrie;
 		printf("wordset %d: ", i);
 		for (j = 0; dict[i][j]; j++)
-			btrie.insert(dict[i][j], length(dict[i][j]), value(j, i));
+			btrie.insert(dict[i][j], length(dict[i][j]), unsigned_value(j, i));
 		basic_trie ctrie(btrie);
 		for (j = 0; dict[i][j]; j++) {
-			if (ctrie.search(dict[i][j], length(dict[i][j]), &val) && val == value(j, i)) {
+			if (ctrie.search(dict[i][j], length(dict[i][j]), &val) && val == unsigned_value(j, i)) {
 				printf("[%d] ", val);
 			} else {
 				printf("\nTEST FAILED on '%s'!\n", dict[i][j]);
@@ -84,11 +77,11 @@ int main()
 		basic_trie btrie;
 		printf("wordset %d: ", i);
 		for (j = 0; dict[i][j]; j++)
-			btrie.insert(dict[i][j], length(dict[i][j]), value(j, i));
+			btrie.insert(dict[i][j], length(dict[i][j]), unsigned_value(j, i));
 		basic_trie ctrie;
 		ctrie = btrie;
 		for (j = 0; dict[i][j]; j++) {
-			if (ctrie.search(dict[i][j], length(dict[i][j]), &val) && val == value(j, i)) {
+			if (ctrie.search(dict[i][j], length(dict[i][j]), &val) && val == unsigned_value(j, i)) {
 				printf("[%d] ", val);
 			} else {
 				printf("\nTEST FAILED on '%s'!\n", dict[i][j]);
@@ -98,7 +91,6 @@ int main()
 		}
 		printf("\n");
 	}
-#endif
 
 /* double_trie */
 	printf("\ndouble_trie\n");
@@ -107,9 +99,9 @@ int main()
 		double_trie btrie;
 		printf("wordset %d: ", i);
 		for (j = 0; dict[i][j]; j++)
-			btrie.insert(dict[i][j], length(dict[i][j]), -value(j, i) + 3);
+			btrie.insert(dict[i][j], length(dict[i][j]), signed_value(j, i));
 		for (j = 0; dict[i][j]; j++) {
-			if (btrie.search(dict[i][j], length(dict[i][j]), &val) && val == -value(j, i) + 3) {
+			if (btrie.search(dict[i][j], length(dict[i][j]), &val) && val == signed_value(j, i)) {
 				printf("[%d] ", val);
 			} else {
 				printf("\nTEST FAILED on '%s' = %d!\n", dict[i][j], val);
@@ -127,30 +119,26 @@ int main()
 /* binary test */
 	do {
 		double_trie btrie;
-		bool fail = false;
+		const char *binary[] = {"\x00\x01\x02", "\x00\x01", "\x00"};
+		size_t binary_size[] = {3, 2, 1};
 		printf("\ndouble_trie binary data\n");
-		printf("-------------------------\nset 0:");
-		btrie.insert("\x00\x01\x02", 3, 1);
-		btrie.insert("\x02\x00\x01", 3, 2);
-		btrie.insert("\x02\x01\x00", 3, 3);
-		if (!btrie.search("\x00\x01\x02", 3, &val))
-			fail = true;
-		printf("%d ", val);
-		if (!btrie.search("\x02\x00\x01", 3, &val))
-			fail = true;
-		printf("%d ", val);
-		if (!btrie.search("\x02\x01\x00", 3, &val))
-			fail = true;
-		printf("%d\n", val);
-		if (fail) {
-			printf("\nTEST FAILED on '%s'!\n", dict[i][j]);
-			btrie.trace_table(0, 0);
-			std::cout << "FRONT: \n";
-			btrie.front_trie()->trace(1);
-			std::cout << "REAR: \n";
-			btrie.rear_trie()->trace(1);
-			exit(0);
+		printf("-------------------------\nbinary data:");
+		for (i = 0; i < sizeof(binary) / sizeof(char *); i++)
+			btrie.insert(binary[i], binary_size[i],  1 - i);
+		for (i = 0; i < sizeof(binary) / sizeof(char *); i++) {
+			if (btrie.search(binary[i], binary_size[i], &val) && val == 1 - i) {
+				printf("[%d] ", val);
+			} else {
+				printf("\nTEST FAILED on #%d = %d!\n", i, val);
+				btrie.trace_table(0, 0);
+				std::cout << "FRONT: \n";
+				btrie.front_trie()->trace(1);
+				std::cout << "REAR: \n";
+				btrie.rear_trie()->trace(1);
+				exit(0);
+			}
 		}
+		printf("\n");
 	} while (0);
 
 /* single_trie */
@@ -160,9 +148,9 @@ int main()
 		single_trie btrie;
 		printf("wordset %d: ", i);
 		for (j = 0; dict[i][j]; j++)
-			btrie.insert(dict[i][j], length(dict[i][j]), -value(j, i) + 1);
+			btrie.insert(dict[i][j], length(dict[i][j]), signed_value(j, i));
 		for (j = 0; dict[i][j]; j++) {
-			if (btrie.search(dict[i][j], length(dict[i][j]), &val) && val == -value(j, i) + 1) {
+			if (btrie.search(dict[i][j], length(dict[i][j]), &val) && val == signed_value(j, i)) {
 				printf("[%d] ", val);
 			} else {
 				printf("\nTEST FAILED on '%s'!\n", dict[i][j]);

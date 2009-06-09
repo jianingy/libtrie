@@ -27,7 +27,7 @@ static const char* pretty_size(size_t size, char *buf, size_t buflen)
 {
     assert(buf);
     if (size > 1024 * 1024 * 1024) {
-        snprintf(buf, buflen, "%4.2fG", 
+        snprintf(buf, buflen, "%4.2fG",
                  static_cast<double>(size) / (1024 * 1024 * 1024));
     } else if (size > 1024 * 1024) {
         snprintf(buf, buflen, "%4.2fM",
@@ -283,7 +283,7 @@ void basic_trie::trace(size_type s) const
                         std::cerr << "-'" << ch << "'->";
                     else
                         std::cerr << "-<" << std::hex
-                                  << static_cast<int>(ch) << ">->";
+                                  << static_cast<uint8_t>(ch) << ">->";
                 }
             }
             std::clog << *it << "[" << cbase << "]";
@@ -442,10 +442,15 @@ void double_trie::lhs_insert(size_type s,
         t = lhs_->next(s, basic_trie::kTerminator);
         if (!lhs_->check_transition(s, t))
             t = lhs_->create_transition(s, basic_trie::kTerminator);
-        if (check_separator(t))
-            index_[-lhs_->base(t)].data = value;
-        else
-            lhs_->set_base(t, value);
+        size_type i;
+        if (check_separator(t)) {
+            i = -lhs_->base(t);
+        } else {
+            i = find_index_entry(t);
+            lhs_->set_base(t, -i);
+        }
+        index_[i].data = value;
+        index_[i].index = -1;
     }
 }
 
@@ -507,7 +512,11 @@ void double_trie::rhs_insert(size_type s, size_type r,
         index_[i].data = value;
     } else {
         t = lhs_->create_transition(s, basic_trie::kTerminator);
-        lhs_->set_base(t, value);
+        //  lhs_->set_base(t, value);
+        size_type i = find_index_entry(t);
+        lhs_->set_base(t, -i);
+        index_[i].data = value;
+        index_[i].index = -1;
     }
 
     // R-3
@@ -565,8 +574,6 @@ void double_trie::insert(const char *inputs, size_t length, value_type value)
     // check for terminator
     if (p >= inputs + length &&
         rhs_->check_reverse_transition(r, basic_trie::kTerminator)) {
-        //r = rhs_->prev(r);
-        //exists_.append(1, basic_trie::kTerminator);
         // key already exists
         index_[-lhs_->base(s)].data = value;
         return;
@@ -606,6 +613,13 @@ bool double_trie::search(const char *inputs,
             return false;
         }
     }
+
+    if (index_[-lhs_->base(s)].index < 0) {
+        if (value)
+            *value = index_[-lhs_->base(s)].data;
+        return true;
+    }
+
     size_type r = link_state(s);
     if (rhs_->check_reverse_transition(r, basic_trie::kTerminator))
         r = rhs_->prev(r);
@@ -621,6 +635,8 @@ bool double_trie::search(const char *inputs,
             *value = index_[-lhs_->base(s)].data;
         return true;
     }
+    fprintf(stderr, "false s = %d, link = %d\n", s, link_state(s));
+    rhs_->trace(r);
     return false;
 }
 
@@ -740,7 +756,7 @@ void single_trie::insert_suffix(size_type s,
     const char *p;
 
     trie_->set_base(s, -next_suffix_);
-    if (next_suffix_ + static_cast<size_type>(length) + 1 
+    if (next_suffix_ + static_cast<size_type>(length) + 1
             >= header_->suffix_size)
         resize_suffix(next_suffix_ + length + 1);
     for (p = inputs; p < inputs + length; p++)
@@ -763,7 +779,7 @@ void single_trie::branch(size_type s,
     if (length + 1 >= common_.size)
         resize_common(length + 1);
     for (p = inputs, cp = common_.data; p < inputs + length
-                    && suffix_[suffix_start + p - inputs] 
+                    && suffix_[suffix_start + p - inputs]
                        == basic_trie::char_in(*p); p++) {
        *cp = basic_trie::char_in(*p);
 
@@ -771,10 +787,10 @@ void single_trie::branch(size_type s,
            extremum.max = *cp;
        if (*p < extremum.min || !extremum.min)
            extremum.min = *cp;
-       ++cp;    
+       ++cp;
     }
-    *cp = '\0'; 
-    
+    *cp = '\0';
+
     if (p >= inputs + length
         && suffix_[suffix_start + p - inputs] == basic_trie::kTerminator) {
         suffix_[suffix_start + p - inputs + 1] = value;
@@ -851,7 +867,7 @@ single_trie::search(const char *inputs, size_t length, value_type *value) const
             s = t;
         else
             return false;
-    }    
+    }
     if (trie_->base(s) < 0) {
         size_type len = length - (p - inputs);
         size_type start;
@@ -888,7 +904,7 @@ void single_trie::build(const char *filename, bool verbose)
         fwrite(trie_->header(), sizeof(basic_trie::header_type), 1, out);
         fwrite(trie_->states(), sizeof(basic_trie::state_type)
                                * trie_->header()->size, 1, out);
-                               
+
         fclose(out);
         if (verbose) {
             char buf[256];

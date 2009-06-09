@@ -39,11 +39,13 @@ class trie_interface {
     typedef int32_t char_type;
 
     trie_interface() {}
-    trie_interface(const char *filename) {}
-    virtual void insert(const char *inputs, size_t length, value_type value) = 0;
-    virtual bool search(const char *inputs, size_t length, value_type *value) const = 0;
+    explicit trie_interface(const char *filename) {}
+    virtual void insert(const char *inputs, size_t length,
+                        value_type value) = 0;
+    virtual bool search(const char *inputs, size_t length,
+                        value_type *value) const = 0;
     virtual void build(const char *filename, bool verbose = false) = 0;
-    virtual ~trie_interface() = 0; 
+    virtual ~trie_interface() = 0;
 };
 
 template<typename T> class trie_relocator_interface {
@@ -74,8 +76,8 @@ class basic_trie
     typedef trie_interface::char_type char_type;
 
     typedef struct {
-        value_type base;
-        value_type check;
+        size_type base;
+        size_type check;
     } state_type;
 
     // this struct should be 64 bytes long for compatible
@@ -120,22 +122,22 @@ class basic_trie
         relocator_ = relocator;
     }
 
-    value_type base(size_type s) const
+    size_type base(size_type s) const
     {
         return states_[s].base;
     }
 
-    value_type check(size_type s) const
+    size_type check(size_type s) const
     {
         return states_[s].check;
     }
 
-    void set_base(size_type s, value_type val)
+    void set_base(size_type s, size_type val)
     {
         states_[s].base = val;
     }
 
-    void set_check(size_type s, value_type val)
+    void set_check(size_type s, size_type val)
     {
         states_[s].check = val;
     }
@@ -375,34 +377,34 @@ class double_trie: public trie_interface {
     {
         static const size_type dsize = 20;
         size_type i;
-        printf("========================================");
-        printf("\nSEQ     |");
+        fprintf(stderr,"========================================");
+        fprintf(stderr,"\nSEQ     |");
         for (i = istart; i < dsize && i < header_->index_size; i++)
-            printf("%4d ", i);
-        printf("\nDATA    |");
+            fprintf(stderr,"%4d ", i);
+        fprintf(stderr,"\nDATA    |");
         for (i = istart; i < dsize && i < header_->index_size; i++)
-            printf("%4d ", index_[i].data);
-        printf("\nINDEX   |");
+            fprintf(stderr,"%4d ", index_[i].data);
+        fprintf(stderr,"\nINDEX   |");
         for (i = istart; i < dsize && i < header_->index_size; i++)
-            printf("%4d ", index_[i].index);
-        printf("\nCOUNT   |");
+            fprintf(stderr,"%4d ", index_[i].index);
+        fprintf(stderr,"\nCOUNT   |");
         for (i = astart; i < dsize && i < header_->accept_size; i++)
-            printf("%4d ", count_referer(accept_[i].accept));
-        printf("\nACCEPT  |");
+            fprintf(stderr,"%4d ", count_referer(accept_[i].accept));
+        fprintf(stderr,"\nACCEPT  |");
         for (i = astart; i < dsize && i < header_->accept_size; i++)
-            printf("%4d ", accept_[i].accept);
-        printf("\n========================================\n");
+            fprintf(stderr,"%4d ", accept_[i].accept);
+        fprintf(stderr,"\n========================================\n");
         std::set<size_type>::const_iterator it;
         std::map<size_type, refer_type>::const_iterator mit;
         for (mit = refer_.begin(); mit != refer_.end(); mit++) {
-            printf("%4d: ", mit->first);
+            fprintf(stderr,"%4d: ", mit->first);
             for (it = mit->second.referer.begin();
                  it != mit->second.referer.end();
                  it++)
-                printf("%4d ", *it);
-            printf("\n");
+                fprintf(stderr,"%4d ", *it);
+            fprintf(stderr,"\n");
         }
-        printf("========================================\n");
+        fprintf(stderr,"========================================\n");
     }
 #endif
 
@@ -645,7 +647,7 @@ class single_trie: public trie_interface
         for (i = start; i < header_->suffix_size && i < count; i++) {
             if (suffix_[i] == basic_trie::kTerminator)
                 printf("[%d:#]", i);
-            else if (isgraph(basic_trie::char_out(suffix_[i]))) 
+            else if (isgraph(basic_trie::char_out(suffix_[i])))
                 printf("[%d:%c]", i, basic_trie::char_out(suffix_[i]));
             else
                 printf("[%d:%x]", i, suffix_[i]);
