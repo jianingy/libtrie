@@ -16,7 +16,7 @@ query_trie(const char *query, const char *index, bool verbose)
     int value;
     int trie_type = 0;
     try {
-        trie = new suffix_trie(index);
+        trie = new single_trie(index);
         trie_type = 1;
     } catch (...) {
         trie = new double_trie(index);
@@ -30,7 +30,7 @@ query_trie(const char *query, const char *index, bool verbose)
     }
 
     if (trie_type == 1)
-        delete static_cast<suffix_trie *>(trie);
+        delete static_cast<single_trie *>(trie);
     else
         delete static_cast<double_trie *>(trie);
 
@@ -42,7 +42,7 @@ build_trie(const char *source, const char *index, int trie_type, bool verbose)
 {
     trie_interface *trie;
     if (trie_type == 1)
-        trie = new suffix_trie();
+        trie = new single_trie();
     else
         trie = new double_trie();
 
@@ -83,7 +83,7 @@ build_trie(const char *source, const char *index, int trie_type, bool verbose)
     }
 
     if (trie_type == 1)
-        delete static_cast<suffix_trie *>(trie);
+        delete static_cast<single_trie *>(trie);
     else
         delete static_cast<double_trie *>(trie);
 

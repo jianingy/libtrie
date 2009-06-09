@@ -604,7 +604,7 @@ class double_trie: public trie_interface {
     static const char magic_[16];
 };
 
-class suffix_trie: public trie_interface
+class single_trie: public trie_interface
 {
   public:
     typedef basic_trie::char_type char_type;
@@ -622,9 +622,9 @@ class suffix_trie: public trie_interface
         size_t size;
     } common_type;
 
-    suffix_trie();
-    explicit suffix_trie(const char *filename);
-    ~suffix_trie();
+    single_trie();
+    explicit single_trie(const char *filename);
+    ~single_trie();
     void insert(const char *inputs, size_t length, value_type val);
     bool search(const char *inputs, size_t length, value_type *value) const;
     void build(const char *filename, bool verbose);

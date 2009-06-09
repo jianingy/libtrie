@@ -17,7 +17,7 @@
 
 
 const char double_trie::magic_[16] = "TWO_TRIE";
-const char suffix_trie::magic_[16] = "TAIL_TRIE";
+const char single_trie::magic_[16] = "TAIL_TRIE";
 
 // ************************************************************************
 // * Implementation of helper functions                                   *
@@ -672,7 +672,7 @@ void double_trie::build(const char *filename, bool verbose)
 // * Implementation of suffix trie                                        *
 // ************************************************************************
 
-suffix_trie::suffix_trie()
+single_trie::single_trie()
     :trie_(NULL), suffix_(NULL), header_(NULL), next_suffix_(1),
      mmap_(NULL), mmap_size_(NULL)
 {
@@ -682,7 +682,7 @@ suffix_trie::suffix_trie()
     resize_suffix(256);
 }
 
-suffix_trie::suffix_trie(const char *filename)
+single_trie::single_trie(const char *filename)
     :trie_(NULL), suffix_(NULL), header_(NULL), next_suffix_(1),
      mmap_(NULL), mmap_size_(NULL)
 {
@@ -722,7 +722,7 @@ suffix_trie::suffix_trie(const char *filename)
 }
 
 
-suffix_trie::~suffix_trie()
+single_trie::~single_trie()
 {
     if (!mmap_) {
         sanity_delete(header_);
@@ -732,7 +732,7 @@ suffix_trie::~suffix_trie()
     sanity_delete(trie_);
 }
 
-void suffix_trie::insert_suffix(size_type s,
+void single_trie::insert_suffix(size_type s,
                                 const char *inputs,
                                 size_t length,
                                 value_type value)
@@ -749,7 +749,7 @@ void suffix_trie::insert_suffix(size_type s,
     suffix_[next_suffix_++] = value;
 }
 
-void suffix_trie::branch(size_type s,
+void single_trie::branch(size_type s,
                          const char *inputs,
                          size_t length,
                          value_type value)
@@ -806,10 +806,10 @@ void suffix_trie::branch(size_type s,
 }
 
 
-void suffix_trie::insert(const char *inputs, size_t length, value_type value)
+void single_trie::insert(const char *inputs, size_t length, value_type value)
 {
     if (!inputs)
-        throw std::runtime_error("suffix_trie::insert: input pointer is null");
+        throw std::runtime_error("single_trie::insert: input pointer is null");
 
     size_type s;
     const char *p;
@@ -835,10 +835,10 @@ void suffix_trie::insert(const char *inputs, size_t length, value_type value)
 }
 
 bool
-suffix_trie::search(const char *inputs, size_t length, value_type *value) const
+single_trie::search(const char *inputs, size_t length, value_type *value) const
 {
     if (!inputs)
-        throw std::runtime_error("suffix_trie::search: input pointer is null");
+        throw std::runtime_error("single_trie::search: input pointer is null");
 
     size_type s;
     const char *p;
@@ -872,7 +872,7 @@ suffix_trie::search(const char *inputs, size_t length, value_type *value) const
     }
 }
 
-void suffix_trie::build(const char *filename, bool verbose)
+void single_trie::build(const char *filename, bool verbose)
 {
     FILE *out;
 

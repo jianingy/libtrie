@@ -153,11 +153,11 @@ int main()
 		}
 	} while (0);
 
-/* suffix_trie */
-	printf("\nsuffix_trie\n");
+/* single_trie */
+	printf("\nsingle_trie\n");
 	printf("----------\n");
 	for (i = 0; dict[i][0]; i++) {
-		suffix_trie btrie;
+		single_trie btrie;
 		printf("wordset %d: ", i);
 		for (j = 0; dict[i][j]; j++)
 			btrie.insert(dict[i][j], length(dict[i][j]), -value(j, i) + 1);
