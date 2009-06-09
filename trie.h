@@ -440,7 +440,7 @@ class double_trie: public trie_interface {
     {
         size_type i;
 
-        if (refer_.find(t) != refer_.end()) {
+        if (refer_.find(t) != refer_.end() && refer_[t].referer.size()) {
             i = find_index_entry(s);
             index_[i].index = refer_[t].accept_index;
         } else {
