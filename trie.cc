@@ -717,7 +717,7 @@ void single_trie::create_branch(size_type s,
 
     // check if already exists by checking if the last common char is
     // terminator
-    if (common_.data[i - 1] == basic_trie::kTerminator) {
+    if (i > 0 && common_.data[i - 1] == basic_trie::kTerminator) {
         // duplicated key
         suffix_[start] = value;
         return;
