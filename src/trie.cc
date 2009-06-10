@@ -28,7 +28,7 @@ static trie_type find_archive_type(const char *archive)
     }
 }
 
-trie *create_trie(trie_type type, size_t size)
+trie_interface *create_trie(trie_type type, size_t size)
 {
     if (type == SINGLE_TRIE)
         return new single_trie(size);
@@ -36,7 +36,7 @@ trie *create_trie(trie_type type, size_t size)
         return new double_trie(size);
 }
 
-trie *create_trie(const char *archive)
+trie_interface *create_trie(const char *archive)
 {
     trie_type type = find_archive_type(archive);
     if (type  == SINGLE_TRIE)

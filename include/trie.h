@@ -43,9 +43,9 @@ enum trie_type {
 };
 
 /* create an empty trie */
-trie *create_trie(trie_type type = DOUBLE_TRIE, size_t size = 4096);
+trie_interface *create_trie(trie_type type = DOUBLE_TRIE, size_t size = 4096);
 /* create a trie using archive */
-trie *create_trie(const char *archive);
+trie_interface *create_trie(const char *archive);
 
 END_TRIE_NAMESPACE
 

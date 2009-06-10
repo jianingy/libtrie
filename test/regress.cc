@@ -5,14 +5,13 @@
 #include <string>
 #include <string.h>
 #include <math.h>
-#include "trie.h"
-
+#include "trie_impl.h"
 
 #define length(x) (strlen(x))
 #define unsigned_value(x, y) (unsigned int)(j + 1)
 #define signed_value(x, y) (int)(3 - j)
 
-using namespace xtrie;
+using namespace trie;
 
 int main()
 {

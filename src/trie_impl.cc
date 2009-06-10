@@ -17,7 +17,7 @@
         (X) = NULL; \
     }} while (0);
 
-BEGIN_XTRIE_NAMESPACE
+BEGIN_TRIE_NAMESPACE
 
 const char double_trie::magic_[16] = "TWO_TRIE";
 const char single_trie::magic_[16] = "TAIL_TRIE";
@@ -839,6 +839,6 @@ void single_trie::build(const char *filename, bool verbose)
     }
 }
 
-END_XTRIE_NAMESPACE
+END_TRIE_NAMESPACE
 
 // vim: ts=4 sw=4 ai et
