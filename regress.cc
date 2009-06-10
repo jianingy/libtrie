@@ -43,7 +43,7 @@ int main()
 		for (j = 0; dict[i][j]; j++)
 			btrie.insert(dict[i][j], length(dict[i][j]), unsigned_value(j, i));
 		for (j = 0; dict[i][j]; j++) {
-			if (btrie.search(dict[i][j], length(dict[i][j]), &val) && val == unsigned_value(j, i)) {
+			if (btrie.search(dict[i][j], length(dict[i][j]), &val) && (unsigned)val == unsigned_value(j, i)) {
 				printf("[%d] ", val);
 			} else {
 				printf("\nTEST FAILED on '%s'!\n", dict[i][j]);
@@ -63,7 +63,7 @@ int main()
 			btrie.insert(dict[i][j], length(dict[i][j]), unsigned_value(j, i));
 		basic_trie ctrie(btrie);
 		for (j = 0; dict[i][j]; j++) {
-			if (ctrie.search(dict[i][j], length(dict[i][j]), &val) && val == unsigned_value(j, i)) {
+			if (ctrie.search(dict[i][j], length(dict[i][j]), &val) && (unsigned)val == unsigned_value(j, i)) {
 				printf("[%d] ", val);
 			} else {
 				printf("\nTEST FAILED on '%s'!\n", dict[i][j]);
@@ -84,7 +84,7 @@ int main()
 		basic_trie ctrie;
 		ctrie = btrie;
 		for (j = 0; dict[i][j]; j++) {
-			if (ctrie.search(dict[i][j], length(dict[i][j]), &val) && val == unsigned_value(j, i)) {
+			if (ctrie.search(dict[i][j], length(dict[i][j]), &val) && (unsigned)val == unsigned_value(j, i)) {
 				printf("[%d] ", val);
 			} else {
 				printf("\nTEST FAILED on '%s'!\n", dict[i][j]);

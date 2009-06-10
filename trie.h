@@ -126,6 +126,7 @@ class basic_trie
 
     static const char_type kCharsetSize = trie_input_converter::kCharsetSize;
     static const char_type kTerminator = trie_input_converter::kTerminator;
+    static const size_t kDefaultStateSize = 4096;
 
     typedef struct {
         size_type base;
@@ -143,7 +144,7 @@ class basic_trie
         char_type min;
     } extremum_type;
 
-    explicit basic_trie(size_type size = 1024,
+    explicit basic_trie(size_type size = kDefaultStateSize,
                         trie_relocator_interface<size_type> *relocator = NULL);
     explicit basic_trie(void *header, void *states);
     basic_trie(const basic_trie &trie);
@@ -393,7 +394,7 @@ class double_trie: public trie_interface {
         char unused[40];
     } header_type;
 
-    double_trie();
+    double_trie(size_t size = basic_trie::kDefaultStateSize);
     explicit double_trie(const char *filename);
     ~double_trie();
     void insert(const char *key, size_t length, value_type value);
@@ -659,7 +660,9 @@ class single_trie: public trie_interface
         size_t size;
     } common_type;
 
-    single_trie();
+    static const size_t kDefaultCommonSize = 256;
+
+    single_trie(size_t size = 0);
     explicit single_trie(const char *filename);
     ~single_trie();
     void insert(const char *key, size_t length, value_type value);

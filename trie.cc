@@ -55,7 +55,7 @@ basic_trie::basic_trie(size_type size,
      relocator_(relocator)
 {
     if (size < kCharsetSize)
-        size = kCharsetSize;
+        size = kDefaultStateSize;
     header_ = new header_type();
     memset(header_, 0, sizeof(header_type));
     resize_state(size);
@@ -291,7 +291,7 @@ void basic_trie::trace(size_type s) const
 // * Implementation of two trie                                           *
 // ************************************************************************
 
-double_trie::double_trie()
+double_trie::double_trie(size_t size)
     :header_(NULL), lhs_(NULL), rhs_(NULL), index_(NULL), accept_(NULL),
      next_accept_(1), next_index_(1), front_relocator_(NULL),
      rear_relocator_(NULL), stand_(0), mmap_(NULL), mmap_size_(0)
@@ -303,13 +303,13 @@ double_trie::double_trie()
                            (this, &double_trie::relocate_front);
     rear_relocator_ = new trie_relocator<double_trie>
                           (this, &double_trie::relocate_rear);
-    lhs_ = new basic_trie();
-    rhs_ = new basic_trie();
+    lhs_ = new basic_trie(size);
+    rhs_ = new basic_trie(size);
     lhs_->set_relocator(front_relocator_);
     rhs_->set_relocator(rear_relocator_);
-    header_->index_size = 1024;
+    header_->index_size = size?size:basic_trie::kDefaultStateSize;
     index_ = resize<index_type>(NULL, 0, header_->index_size);
-    header_->accept_size = 1024;
+    header_->accept_size = size?size:basic_trie::kDefaultStateSize;
     accept_ = resize<accept_type>(NULL, 0, header_->accept_size);
 }
 
@@ -619,15 +619,15 @@ void double_trie::build(const char *filename, bool verbose)
 // * Implementation of suffix trie                                        *
 // ************************************************************************
 
-single_trie::single_trie()
+single_trie::single_trie(size_t size)
     :trie_(NULL), suffix_(NULL), header_(NULL), next_suffix_(1),
      mmap_(NULL), mmap_size_(NULL)
 {
-    trie_ = new basic_trie();
+    trie_ = new basic_trie(size);
     header_ = new header_type();
     memset(&common_, 0, sizeof(common_));
-    resize_suffix(256);
-    resize_common(256);
+    resize_suffix(size?size:basic_trie::kDefaultStateSize);
+    resize_common(kDefaultCommonSize);
 }
 
 single_trie::single_trie(const char *filename)
