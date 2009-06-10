@@ -278,7 +278,7 @@ class basic_trie
     void resize_state(size_type size)
     {
         // align with 4k
-        size_type nsize = (((header_->size + size) >> 12) + 1) << 12;
+        size_type nsize = (((header_->size * 2+ size) >> 12) + 1) << 12;
         states_ = resize<state_type>(states_, header_->size, nsize);
         header_->size = nsize;
     }
@@ -659,7 +659,7 @@ class single_trie: public trie_interface
     void resize_suffix(size_type size)
     {
         // align with 4k
-        size_type nsize = (((header_->suffix_size + size) >> 12) + 1) << 12;
+        size_type nsize = (((header_->suffix_size * 2 + size) >> 12) + 1) << 12;
         suffix_ = resize<suffix_type>(suffix_, header_->suffix_size, nsize);
         header_->suffix_size = nsize;
     }
@@ -667,7 +667,7 @@ class single_trie: public trie_interface
     void resize_common(size_type size)
     {
         // align with 4k
-        size_type nsize = (((common_.size + size) >> 12) + 1) << 12;
+        size_type nsize = (((common_.size * 2+ size) >> 12) + 1) << 12;
         common_.data = resize<char_type>(common_.data, common_.size, nsize);
         common_.size = nsize;
     }
