@@ -600,17 +600,18 @@ void double_trie::build(const char *filename, bool verbose)
             size[2] = sizeof(basic_trie::state_type) * lhs_->compact_header()->size;
             size[3] = sizeof(basic_trie::state_type) * rhs_->compact_header()->size;
 
-            fprintf(stderr, "index = %s, ",
-                    pretty_size(size[0], buf, sizeof(buf)));
-            fprintf(stderr, "accept = %s, ",
-                    pretty_size(size[1], buf, sizeof(buf)));
-            fprintf(stderr, "front = %s, ",
-                    pretty_size(size[2], buf, sizeof(buf)));
-            fprintf(stderr, "rear = %s, ",
-                    pretty_size(size[3], buf, sizeof(buf)));
-            fprintf(stderr, "total = %s\n",
-                    pretty_size(size[0] + size[1] + size[2] + size[3],
-                                buf, sizeof(buf)));
+            std::cerr << "index = "
+                      << pretty_size(size[0], buf, sizeof(buf));
+            std::cerr << ", accept = "
+                      << pretty_size(size[1], buf, sizeof(buf));
+            std::cerr << ", front = "
+                      << pretty_size(size[2], buf, sizeof(buf));
+            std::cerr << ", rear = "
+                      << pretty_size(size[3], buf, sizeof(buf));
+            std::cerr << ", total = "
+                      << pretty_size(size[0] + size[1] + size[2] + size[3],
+                                     buf, sizeof(buf));
+                      << std::endl;
         }
     }
 }
@@ -827,12 +828,11 @@ void single_trie::build(const char *filename, bool verbose)
             size[1] = sizeof(basic_trie::state_type)
                       * trie_->compact_header()->size;
 
-            fprintf(stderr, "suffix = %s, ",
-                    pretty_size(size[0], buf, sizeof(buf)));
-            fprintf(stderr, "trie = %s, ",
-                    pretty_size(size[1], buf, sizeof(buf)));
-            fprintf(stderr, "total = %s\n",
-                    pretty_size(size[0] + size[1], buf, sizeof(buf)));
+            std::cerr << "suffix = " << pretty_size(size[0], buf, sizeof(buf));
+            std::cerr << ", trie = " << pretty_size(size[1], buf, sizeof(buf));
+            std::cerr << ", total = "
+                      << pretty_size(size[0] + size[1], buf, sizeof(buf))
+                      << std::endl;
         }
     }
 }

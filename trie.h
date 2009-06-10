@@ -684,11 +684,11 @@ class single_trie: public trie_interface
         size_type i;
         for (i = start; i < header_->suffix_size && i < count; i++) {
             if (suffix_[i] == basic_trie::kTerminator)
-                printf("[%d:#]", i);
+                fprintf(stderr, "[%d:#]", i);
             else if (isgraph(trie_input_converter::char_out(suffix_[i])))
-                printf("[%d:%c]", i, trie_input_converter::char_out(suffix_[i]));
+                fprintf(stderr, "[%d:%c]", i, trie_input_converter::char_out(suffix_[i]));
             else
-                printf("[%d:%x]", i, suffix_[i]);
+                fprintf(stderr, "[%d:%x]", i, suffix_[i]);
         }
         printf("\n");
     }

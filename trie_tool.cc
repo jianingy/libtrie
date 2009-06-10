@@ -19,9 +19,9 @@ query_trie(const char *query, const char *index, bool verbose)
     trie::value_type value;
     trie *mtrie = create_trie(index);
     if (mtrie->search(query, strlen(query), &value)) {
-        printf("%d\n", value);
+        std::cout << value << std::endl;
     } else {
-        fprintf(stderr, "%s not found\n", query);
+        std::cerr << query << " not found." << std::endl;
         retval = 1;
     }
     delete mtrie;
