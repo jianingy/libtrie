@@ -610,7 +610,7 @@ void double_trie::build(const char *filename, bool verbose)
                       << pretty_size(size[3], buf, sizeof(buf));
             std::cerr << ", total = "
                       << pretty_size(size[0] + size[1] + size[2] + size[3],
-                                     buf, sizeof(buf));
+                                     buf, sizeof(buf))
                       << std::endl;
         }
     }
