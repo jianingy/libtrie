@@ -12,6 +12,8 @@
 #define unsigned_value(x, y) (unsigned int)(j + 1)
 #define signed_value(x, y) (int)(3 - j)
 
+using namespace xtrie;
+
 int main()
 {
 	size_t i, j;

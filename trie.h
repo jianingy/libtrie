@@ -32,21 +32,9 @@
 #include <set>
 #include <deque>
 
-class trie_interface {
-  public:
-    typedef int32_t value_type;
-    typedef int32_t size_type;
-    typedef int32_t char_type;
+#include "xtrie.h"
 
-    trie_interface() {}
-    explicit trie_interface(const char *filename) {}
-    virtual void insert(const char *inputs, size_t length,
-                        value_type value) = 0;
-    virtual bool search(const char *inputs, size_t length,
-                        value_type *value) const = 0;
-    virtual void build(const char *filename, bool verbose = false) = 0;
-    virtual ~trie_interface() = 0;
-};
+BEGIN_XTRIE_NAMESPACE
 
 template<typename T> class trie_relocator_interface {
   public:
@@ -734,5 +722,7 @@ class single_trie: public trie_interface
     mutable trie_input_converter converter_;
 };
 #endif  // TRIE_H_
+
+END_XTRIE_NAMESPACE
 
 // vim: ts=4 sw=4 ai et

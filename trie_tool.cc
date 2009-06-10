@@ -8,6 +8,8 @@
 
 #include "trie.h"
 
+using namespace xtrie;
+
 static void *
 query_trie(const char *query, const char *index, bool verbose)
 {
