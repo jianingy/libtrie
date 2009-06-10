@@ -110,7 +110,7 @@ class trie_input_converter
         if (length > inside_size_)
             resize_inside(length + 1);
         for (i = 0; i < length; i++)
-            inside_[i] = char_in(inputs[i]); 
+            inside_[i] = char_in(inputs[i]);
         inside_[i] = kTerminator;
 
         return inside_;
@@ -120,7 +120,7 @@ class trie_input_converter
     void resize_inside(size_type size)
     {
         // align with 4k
-        size_type nsize = (((inside_size_ + size) >> 12) + 1) << 12;
+        size_type nsize = (((inside_size_ * 2 + size) >> 12) + 1) << 12;
         inside_ = resize<char_type>(inside_, inside_size_, nsize);
         inside_size_ = nsize;
     }
@@ -194,6 +194,8 @@ class basic_trie
     void set_base(size_type s, size_type val)
     {
         states_[s].base = val;
+        if (s > max_state_)
+            max_state_ = s;
     }
 
     void set_check(size_type s, size_type val)
@@ -273,6 +275,13 @@ class basic_trie
         return s;
     }
 
+    const header_type *compact_header() const
+    {
+        memcpy(&compact_header_, header_, sizeof(header_type));
+        compact_header_.size = max_state_;
+        return &compact_header_;
+    }
+
     const header_type *header() const
     {
         return header_;
@@ -281,6 +290,11 @@ class basic_trie
     const state_type *states() const
     {
         return states_;
+    }
+
+    size_type max_state() const
+    {
+        return max_state_;
     }
 
     bool owner() const
@@ -309,7 +323,7 @@ class basic_trie
     void resize_state(size_type size)
     {
         // align with 4k
-        size_type nsize = (((header_->size + size) >> 12) + 1) << 12;
+        size_type nsize = (((header_->size * 2 + size) >> 12) + 1) << 12;
         states_ = resize<state_type>(states_, header_->size, nsize);
         header_->size = nsize;
     }
@@ -349,9 +363,11 @@ class basic_trie
     header_type *header_;
     state_type *states_;
     size_type last_base_;
+    size_type max_state_;
     bool owner_;
     trie_relocator_interface<size_type> *relocator_;
     mutable trie_input_converter converter_;
+    mutable header_type compact_header_;
 };
 
 template<typename T>
@@ -444,7 +460,7 @@ class double_trie: public trie_interface {
     size_type rhs_append(const char_type *inputs);
     void lhs_insert(size_type s, const char_type *inputs, value_type value);
     void rhs_clean_more(size_type t);
-    void rhs_insert(size_type s, size_type r, 
+    void rhs_insert(size_type s, size_type r,
                     const std::vector<char_type> &match,
                     const char_type *remain, char_type ch, size_type value);
 
@@ -690,7 +706,7 @@ class single_trie: public trie_interface
     void resize_suffix(size_type size)
     {
         // align with 4k
-        size_type nsize = (((header_->suffix_size + size) >> 12) + 1) << 12;
+        size_type nsize = (((header_->suffix_size * 2 + size) >> 12) + 1) << 12;
         suffix_ = resize<suffix_type>(suffix_, header_->suffix_size, nsize);
         header_->suffix_size = nsize;
     }
@@ -698,7 +714,7 @@ class single_trie: public trie_interface
     void resize_common(size_type size)
     {
         // align with 4k
-        size_type nsize = (((common_.size + size) >> 12) + 1) << 12;
+        size_type nsize = (((common_.size * 2 + size) >> 12) + 1) << 12;
         common_.data = resize<char_type>(common_.data, common_.size, nsize);
         common_.size = nsize;
     }

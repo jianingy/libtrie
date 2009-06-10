@@ -50,7 +50,7 @@ trie_interface::~trie_interface()
 
 basic_trie::basic_trie(size_type size,
                        trie_relocator_interface<size_type> *relocator)
-    :header_(NULL), states_(NULL), last_base_(0), owner_(true),
+    :header_(NULL), states_(NULL), last_base_(0), max_state_(0), owner_(true),
      relocator_(relocator)
 {
     if (size < kCharsetSize)
@@ -61,7 +61,7 @@ basic_trie::basic_trie(size_type size,
 }
 
 basic_trie::basic_trie(void *header, void *states)
-    :header_(NULL), states_(NULL), last_base_(0), owner_(false),
+    :header_(NULL), states_(NULL), last_base_(0), max_state_(0), owner_(false),
      relocator_(NULL)
 {
     header_ = static_cast<header_type *>(header);
@@ -69,7 +69,7 @@ basic_trie::basic_trie(void *header, void *states)
 }
 
 basic_trie::basic_trie(const basic_trie &trie)
-    :header_(NULL), states_(NULL), last_base_(0), owner_(false),
+    :header_(NULL), states_(NULL), last_base_(0), max_state_(0), owner_(false),
      relocator_(NULL)
 {
     clone(trie);
@@ -94,6 +94,7 @@ void basic_trie::clone(const basic_trie &trie)
         }
     }
     owner_ = true;
+    max_state_ = trie.max_state();
     header_ = new header_type();
     states_ = new state_type[trie.header()->size];
     memcpy(header_, trie.header(), sizeof(header_type));
@@ -412,7 +413,7 @@ double_trie::rhs_append(const char_type *inputs)
     return s;
 }
 
-void 
+void
 double_trie::lhs_insert(size_type s, const char_type *inputs, value_type value)
 {
     // XXX: check inputs[0] == kTerminator for duplicated key
@@ -501,7 +502,7 @@ void double_trie::insert(const char *key, size_t length, value_type value)
     const char_type *p;
     const char_type *inputs = converter_.convert(key, length);
     size_type s = lhs_->go_forward(1, inputs, &p);
-    
+
     // XXX: check p == null for duplicated key
     if (!check_separator(s)) {
         lhs_insert(s, p, value);
@@ -581,20 +582,22 @@ void double_trie::build(const char *filename, bool verbose)
         fwrite(header_, sizeof(header_type), 1, out);
         fwrite(index_, sizeof(index_type) * header_->index_size, 1, out);
         fwrite(accept_, sizeof(accept_type) * header_->accept_size, 1, out);
-        fwrite(lhs_->header(), sizeof(basic_trie::header_type), 1, out);
+        fwrite(lhs_->compact_header(),
+               sizeof(basic_trie::header_type), 1, out);
         fwrite(lhs_->states(), sizeof(basic_trie::state_type)
-                               * lhs_->header()->size, 1, out);
-        fwrite(rhs_->header(), sizeof(basic_trie::header_type), 1, out);
+                               * lhs_->compact_header()->size, 1, out);
+        fwrite(rhs_->compact_header(),
+               sizeof(basic_trie::header_type), 1, out);
         fwrite(rhs_->states(), sizeof(basic_trie::state_type)
-                               * rhs_->header()->size, 1, out);
+                               * rhs_->compact_header()->size, 1, out);
         fclose(out);
         if (verbose) {
             char buf[256];
             size_t size[4];
             size[0] = sizeof(index_type) * header_->index_size;
             size[1] = sizeof(accept_type) * header_->accept_size;
-            size[2] = sizeof(basic_trie::state_type) * lhs_->header()->size;
-            size[3] = sizeof(basic_trie::state_type) * rhs_->header()->size;
+            size[2] = sizeof(basic_trie::state_type) * lhs_->compact_header()->size;
+            size[3] = sizeof(basic_trie::state_type) * rhs_->compact_header()->size;
 
             fprintf(stderr, "index = %s, ",
                     pretty_size(size[0], buf, sizeof(buf)));
@@ -701,7 +704,7 @@ void single_trie::create_branch(size_type s,
     // find common string
     const char_type *p = inputs;
     size_t i = 0;
-    do {   
+    do {
         if (suffix_[start] != *p)
             break;
         if (i + 1 >= common_.size)
@@ -713,7 +716,7 @@ void single_trie::create_branch(size_type s,
             extremum.min = *p;
         ++start;
     } while (*p++ != basic_trie::kTerminator);
-    common_.data[i] = 0; //  end common string 
+    common_.data[i] = 0; //  end common string
 
     // check if already exists by checking if the last common char is
     // terminator
@@ -729,7 +732,7 @@ void single_trie::create_branch(size_type s,
         for (i = 0; common_.data[i]; i++)
             s = trie_->create_transition(s, common_.data[i]);
     } else {
-       trie_->set_base(s, 0); 
+       trie_->set_base(s, 0);
     }
 
     // create twig for old suffix
@@ -810,16 +813,18 @@ void single_trie::build(const char *filename, bool verbose)
         header_->suffix_size = next_suffix_ - 1;
         fwrite(header_, sizeof(header_type), 1, out);
         fwrite(suffix_, sizeof(suffix_type) * header_->suffix_size, 1, out);
-        fwrite(trie_->header(), sizeof(basic_trie::header_type), 1, out);
+        fwrite(trie_->compact_header(),
+               sizeof(basic_trie::header_type), 1, out);
         fwrite(trie_->states(), sizeof(basic_trie::state_type)
-                               * trie_->header()->size, 1, out);
+                               * trie_->compact_header()->size, 1, out);
 
         fclose(out);
         if (verbose) {
             char buf[256];
             size_t size[2];
             size[0] = sizeof(suffix_type) * header_->suffix_size;
-            size[1] = sizeof(basic_trie::state_type) * trie_->header()->size;
+            size[1] = sizeof(basic_trie::state_type)
+                      * trie_->compact_header()->size;
 
             fprintf(stderr, "suffix = %s, ",
                     pretty_size(size[0], buf, sizeof(buf)));
