@@ -18,11 +18,11 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include <stdlib.h>
 #include <stdint.h>
-#include <string.h>
-#include <stdio.h>
 
+#include <cstring>
+#include <cstdio>
+#include <cstdlib>
 #include <algorithm>
 #include <stdexcept>
 #include <vector>
@@ -45,16 +45,31 @@ template<typename T> class trie_relocator_interface {
 template<typename T>
 T* resize(T *ptr, size_t old_size, size_t new_size)
 {
-    T *new_block = new T[new_size];
-    if (ptr) {
-        std::copy(ptr, ptr + old_size, new_block);
-        delete []ptr;
+    T *new_block = reinterpret_cast<T *>realloc(ptr, new_size * sizeof(T));
+    if (new_size && ptr) {
         memset(new_block + old_size, 0, (new_size - old_size) * sizeof(T));
-        return new_block;
+    } else if (new_size) {
+        memset(new_block, 0, new_size * sizeof(T));
+    }
+    return new_block;
+#if 0
+    if (ptr) {
+        if (!new_size) {
+            delete []ptr;
+            return NULL;
+        } else {
+            T *new_block = new T[new_size];
+            std::copy(ptr, ptr + old_size, new_block);
+            delete []ptr;
+            memset(new_block + old_size, 0, (new_size - old_size) * sizeof(T));
+            return new_block;
+        }
     } else {
+        T *new_block = new T[new_size];
         memset(new_block, 0, new_size * sizeof(T));
         return new_block;
     }
+#endif
 }
 
 class trie_input_converter
@@ -75,8 +90,7 @@ class trie_input_converter
 
     ~trie_input_converter()
     {
-        delete []inside_;
-        inside_ = NULL;
+        resize(inside_, 0, 0);
         inside_size_ = 0;
     }
 
@@ -109,7 +123,7 @@ class trie_input_converter
     {
         // align with 4k
         size_type nsize = (((inside_size_ * 2 + size) >> 12) + 1) << 12;
-        inside_ = resize<char_type>(inside_, inside_size_, nsize);
+        inside_ = resize(inside_, inside_size_, nsize);
         inside_size_ = nsize;
     }
   private:
@@ -313,7 +327,7 @@ class basic_trie
     {
         // align with 4k
         size_type nsize = (((header_->size * 2 + size) >> 12) + 1) << 12;
-        states_ = resize<state_type>(states_, header_->size, nsize);
+        states_ = resize(states_, header_->size, nsize);
         header_->size = nsize;
     }
 
@@ -394,7 +408,7 @@ class double_trie: public trie_interface {
         char unused[40];
     } header_type;
 
-    double_trie(size_t size = basic_trie::kDefaultStateSize);
+    explicit double_trie(size_t size = basic_trie::kDefaultStateSize);
     explicit double_trie(const char *filename);
     ~double_trie();
     void insert(const char *key, size_t length, value_type value);
@@ -415,34 +429,34 @@ class double_trie: public trie_interface {
     {
         static const size_type dsize = 20;
         size_type i;
-        fprintf(stderr,"========================================");
-        fprintf(stderr,"\nSEQ     |");
+        fprintf(stderr, "========================================");
+        fprintf(stderr, "\nSEQ     |");
         for (i = istart; i < dsize && i < header_->index_size; i++)
-            fprintf(stderr,"%4d ", i);
-        fprintf(stderr,"\nDATA    |");
+            fprintf(stderr, "%4d ", i);
+        fprintf(stderr, "\nDATA    |");
         for (i = istart; i < dsize && i < header_->index_size; i++)
-            fprintf(stderr,"%4d ", index_[i].data);
-        fprintf(stderr,"\nINDEX   |");
+            fprintf(stderr, "%4d ", index_[i].data);
+        fprintf(stderr, "\nINDEX   |");
         for (i = istart; i < dsize && i < header_->index_size; i++)
-            fprintf(stderr,"%4d ", index_[i].index);
-        fprintf(stderr,"\nCOUNT   |");
+            fprintf(stderr, "%4d ", index_[i].index);
+        fprintf(stderr, "\nCOUNT   |");
         for (i = astart; i < dsize && i < header_->accept_size; i++)
-            fprintf(stderr,"%4d ", count_referer(accept_[i].accept));
-        fprintf(stderr,"\nACCEPT  |");
+            fprintf(stderr, "%4d ", count_referer(accept_[i].accept));
+        fprintf(stderr, "\nACCEPT  |");
         for (i = astart; i < dsize && i < header_->accept_size; i++)
-            fprintf(stderr,"%4d ", accept_[i].accept);
-        fprintf(stderr,"\n========================================\n");
+            fprintf(stderr, "%4d ", accept_[i].accept);
+        fprintf(stderr, "\n========================================\n");
         std::set<size_type>::const_iterator it;
         std::map<size_type, refer_type>::const_iterator mit;
         for (mit = refer_.begin(); mit != refer_.end(); mit++) {
-            fprintf(stderr,"%4d: ", mit->first);
+            fprintf(stderr, "%4d: ", mit->first);
             for (it = mit->second.referer.begin();
                  it != mit->second.referer.end();
                  it++)
-                fprintf(stderr,"%4d ", *it);
-            fprintf(stderr,"\n");
+                fprintf(stderr, "%4d ", *it);
+            fprintf(stderr, "\n");
         }
-        fprintf(stderr,"========================================\n");
+        fprintf(stderr, "========================================\n");
     }
 
   protected:
@@ -513,7 +527,7 @@ class double_trie: public trie_interface {
             }
             if (next >= header_->index_size) {
                 size_type nsize = (((next * 2) >> 12) + 1) << 12;
-                index_ = resize<index_type>(index_, header_->index_size, nsize);
+                index_ = resize(index_, header_->index_size, nsize);
                 assert(index_[next].index == 0);
                 header_->index_size = nsize;
             }
@@ -536,9 +550,7 @@ class double_trie: public trie_interface {
             }
             if (next >= header_->accept_size) {
                 size_type nsize = (((next * 2) >> 12) + 1) << 12;
-                accept_ = resize<accept_type>(accept_,
-                                              header_->accept_size,
-                                              nsize);
+                accept_ = resize(accept_, header_->accept_size, nsize);
                 header_->accept_size = nsize;
             }
             index_[i].index = next;
@@ -662,7 +674,7 @@ class single_trie: public trie_interface
 
     static const size_t kDefaultCommonSize = 256;
 
-    single_trie(size_t size = 0);
+    explicit single_trie(size_t size = 0);
     explicit single_trie(const char *filename);
     ~single_trie();
     void insert(const char *key, size_t length, value_type value);
@@ -686,7 +698,8 @@ class single_trie: public trie_interface
             if (suffix_[i] == basic_trie::kTerminator)
                 fprintf(stderr, "[%d:#]", i);
             else if (isgraph(trie_input_converter::char_out(suffix_[i])))
-                fprintf(stderr, "[%d:%c]", i, trie_input_converter::char_out(suffix_[i]));
+                fprintf(stderr, "[%d:%c]",
+                        i, trie_input_converter::char_out(suffix_[i]));
             else
                 fprintf(stderr, "[%d:%x]", i, suffix_[i]);
         }
@@ -698,7 +711,7 @@ class single_trie: public trie_interface
     {
         // align with 4k
         size_type nsize = (((header_->suffix_size * 2 + size) >> 12) + 1) << 12;
-        suffix_ = resize<suffix_type>(suffix_, header_->suffix_size, nsize);
+        suffix_ = resize(suffix_, header_->suffix_size, nsize);
         header_->suffix_size = nsize;
     }
 
@@ -706,7 +719,7 @@ class single_trie: public trie_interface
     {
         // align with 4k
         size_type nsize = (((common_.size * 2 + size) >> 12) + 1) << 12;
-        common_.data = resize<char_type>(common_.data, common_.size, nsize);
+        common_.data = resize(common_.data, common_.size, nsize);
         common_.size = nsize;
     }
 

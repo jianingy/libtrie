@@ -11,11 +11,6 @@
         delete (X); \
         (X) = NULL; \
     }} while (0);
-#define sanity_delete_array(X)  do { \
-    if (X) { \
-        delete [](X); \
-        (X) = NULL; \
-    }} while (0);
 
 BEGIN_TRIE_NAMESPACE
 
@@ -88,18 +83,17 @@ void basic_trie::clone(const basic_trie &trie)
 {
     if (owner_) {
         if (header_) {
-            delete header_;
-            header_ = NULL;
+            sanity_delete(header_);
         }
         if (states_) {
-            delete []states_;
+            resize(states_, 0, 0);
             states_ = NULL;  // set to NULL for next resize
         }
     }
     owner_ = true;
     max_state_ = trie.max_state();
     header_ = new header_type();
-    states_ = new state_type[trie.header()->size];
+    states_ = resize(states_, 0, trie.header()->size);
     memcpy(header_, trie.header(), sizeof(header_type));
     memcpy(states_, trie.states(), trie.header()->size * sizeof(state_type));
 }
@@ -108,7 +102,7 @@ basic_trie::~basic_trie()
 {
     if (owner_) {
         sanity_delete(header_);
-        sanity_delete_array(states_);
+        resize(states_, 0, 0);  // free states_
     }
 }
 
@@ -310,9 +304,9 @@ double_trie::double_trie(size_t size)
     lhs_->set_relocator(front_relocator_);
     rhs_->set_relocator(rear_relocator_);
     header_->index_size = size?size:basic_trie::kDefaultStateSize;
-    index_ = resize<index_type>(NULL, 0, header_->index_size);
+    index_ = resize(NULL, 0, header_->index_size);
     header_->accept_size = size?size:basic_trie::kDefaultStateSize;
-    accept_ = resize<accept_type>(NULL, 0, header_->accept_size);
+    accept_ = resize(NULL, 0, header_->accept_size);
 }
 
 double_trie::double_trie(const char *filename)
@@ -374,8 +368,8 @@ double_trie::~double_trie()
             throw std::runtime_error(strerror(errno));
     } else {
         sanity_delete(header_);
-        sanity_delete_array(index_);
-        sanity_delete_array(accept_);
+        resize(index_, 0, 0);  // free index_
+        resize(accept_, 0, 0);  // free accept_
         sanity_delete(front_relocator_);
         sanity_delete(rear_relocator_);
     }
@@ -599,8 +593,10 @@ void double_trie::build(const char *filename, bool verbose)
             size_t size[4];
             size[0] = sizeof(index_type) * header_->index_size;
             size[1] = sizeof(accept_type) * header_->accept_size;
-            size[2] = sizeof(basic_trie::state_type) * lhs_->compact_header()->size;
-            size[3] = sizeof(basic_trie::state_type) * rhs_->compact_header()->size;
+            size[2] = sizeof(basic_trie::state_type)
+                      * lhs_->compact_header()->size;
+            size[3] = sizeof(basic_trie::state_type)
+                      * rhs_->compact_header()->size;
 
             std::cerr << "index = "
                       << pretty_size(size[0], buf, sizeof(buf));
@@ -677,8 +673,8 @@ single_trie::~single_trie()
 {
     if (!mmap_) {
         sanity_delete(header_);
-        sanity_delete_array(suffix_);
-        sanity_delete_array(common_.data);
+        resize(suffix_, 0, 0);   // free suffix_
+        resize(common_.data, 0, 0);  // free common_.data
     }
     sanity_delete(trie_);
 }
