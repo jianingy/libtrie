@@ -1,7 +1,7 @@
 // Copyright Jianing Yang <jianingy.yang@gmail.com> 2009
 
-#ifndef TRIE_H_
-#define TRIE_H_
+#ifndef TRIE_IMPL_H_
+#define TRIE_IMPL_H_
 
 /*
  * Reference:
@@ -32,9 +32,9 @@
 #include <set>
 #include <deque>
 
-#include "xtrie.h"
+#include "trie.h"
 
-BEGIN_XTRIE_NAMESPACE
+BEGIN_TRIE_NAMESPACE
 
 template<typename T> class trie_relocator_interface {
   public:
@@ -724,8 +724,8 @@ class single_trie: public trie_interface
     static const char magic_[16];
     mutable trie_input_converter converter_;
 };
-#endif  // TRIE_H_
+#endif  // TRIE_IMPL_H_
 
-END_XTRIE_NAMESPACE
+END_TRIE_NAMESPACE
 
 // vim: ts=4 sw=4 ai et

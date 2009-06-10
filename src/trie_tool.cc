@@ -8,16 +8,16 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include "xtrie.h"
+#include "trie.h"
 
-using namespace xtrie;
+using namespace trie;
 
 static void *
 query_trie(const char *query, const char *index, bool verbose)
 {
     int retval = 0;
-    trie::value_type value;
-    trie *mtrie = create_trie(index);
+    trie_interface::value_type value;
+    trie_interface *mtrie = create_trie(index);
     if (mtrie->search(query, strlen(query), &value)) {
         std::cout << value << std::endl;
     } else {
@@ -31,7 +31,7 @@ query_trie(const char *query, const char *index, bool verbose)
 static void *
 build_trie(const char *source, const char *index, trie_type type, bool verbose)
 {
-    trie *mtrie = create_trie(type);
+    trie_interface *mtrie = create_trie(type);
     mtrie->read_from_text(source, verbose);
     if (verbose)
         std::cerr << "writing to disk..." << std::endl;
@@ -55,8 +55,8 @@ static void help_message()
                  "SOURCE FORMAT:\n"
                  "        value word\n\n"
                  "ARCHIVE TYPE:\n"
-                 "        1: two-trie (default value)\n"
-                 "        2: tail-trie\n"
+                 "        1: tail-trie\n"
+                 "        2: two-trie (default value)\n"
                  "\n"
                  "Report bugs to jianing.yang@alibaba-inc.com\n"
               << std::endl;
@@ -95,7 +95,17 @@ int main(int argc, char *argv[])
                 query = optarg;
                 break;
             case 't':
-                type = (trie_type)atoi(optarg);
+                switch(atoi(optarg)) {
+                    case 1:
+                        type = SINGLE_TRIE;
+                        break;
+                    case 2:
+                        type = DOUBLE_TRIE;
+                        break;
+                    default:
+                        help_message();
+                        exit(0);
+                }
                 break;
             case 'v':
                 verbose = true;

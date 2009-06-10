@@ -2,7 +2,9 @@
 
 #include <iostream>
 #include <cassert>
-#include "trie.h"
+#include <cstdio>
+
+#include "trie_impl.h"
 
 #define sanity_delete(X)  do { \
     if (X) { \
