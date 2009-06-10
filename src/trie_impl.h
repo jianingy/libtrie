@@ -45,7 +45,7 @@ template<typename T> class trie_relocator_interface {
 template<typename T>
 T* resize(T *ptr, size_t old_size, size_t new_size)
 {
-    T *new_block = reinterpret_cast<T *>realloc(ptr, new_size * sizeof(T));
+    T *new_block = reinterpret_cast<T *>(realloc(ptr, new_size * sizeof(T)));
     if (new_size && ptr) {
         memset(new_block + old_size, 0, (new_size - old_size) * sizeof(T));
     } else if (new_size) {

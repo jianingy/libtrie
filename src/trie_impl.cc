@@ -304,9 +304,9 @@ double_trie::double_trie(size_t size)
     lhs_->set_relocator(front_relocator_);
     rhs_->set_relocator(rear_relocator_);
     header_->index_size = size?size:basic_trie::kDefaultStateSize;
-    index_ = resize(NULL, 0, header_->index_size);
+    index_ = resize(index_, 0, header_->index_size);
     header_->accept_size = size?size:basic_trie::kDefaultStateSize;
-    accept_ = resize(NULL, 0, header_->accept_size);
+    accept_ = resize(accept_, 0, header_->accept_size);
 }
 
 double_trie::double_trie(const char *filename)
