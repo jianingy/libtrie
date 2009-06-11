@@ -36,7 +36,7 @@ int main()
     printf("\nbasic_trie\n");
     printf("----------\n");
     for (i = 0; dict[i][0]; i++) {
-        basic_trie btrie;
+        trie::basic_trie btrie;
         printf("wordset %d: ", i);
         for (j = 0; dict[i][j]; j++) {
             key.assign(dict[i][j], length(dict[i][j]));
@@ -59,13 +59,13 @@ int main()
     printf("\nbasic_trie copy constructor\n");
     printf("----------\n");
     for (i = 0; dict[i][0]; i++) {
-        basic_trie btrie;
+        trie::basic_trie btrie;
         printf("wordset %d: ", i);
         for (j = 0; dict[i][j]; j++) {
             key.assign(dict[i][j], length(dict[i][j]));
             btrie.insert(key, unsigned_value(j, i));
         }
-        basic_trie ctrie(btrie);
+        trie::basic_trie ctrie(btrie);
         for (j = 0; dict[i][j]; j++) {
             key.assign(dict[i][j], length(dict[i][j]));
             if (ctrie.search(key, &val) && (unsigned)val
@@ -83,13 +83,13 @@ int main()
     printf("\nbasic_trie operator = \n");
     printf("----------\n");
     for (i = 0; dict[i][0]; i++) {
-        basic_trie btrie;
+        trie::basic_trie btrie;
         printf("wordset %d: ", i);
         for (j = 0; dict[i][j]; j++) {
             key.assign(dict[i][j], length(dict[i][j]));
             btrie.insert(key, unsigned_value(j, i));
         }
-        basic_trie ctrie;
+        trie::basic_trie ctrie;
         ctrie = btrie;
         for (j = 0; dict[i][j]; j++) {
             key.assign(dict[i][j], length(dict[i][j]));
@@ -109,7 +109,7 @@ int main()
     printf("\ndouble_trie\n");
     printf("----------\n");
     for (i = 0; dict[i][0]; i++) {
-        double_trie btrie;
+        trie::double_trie btrie;
         printf("wordset %d: ", i);
         for (j = 0; dict[i][j]; j++) {
             key.assign(dict[i][j], length(dict[i][j]));
@@ -134,7 +134,7 @@ int main()
 
 /* binary test */
     do {
-        double_trie btrie;
+        trie::double_trie btrie;
         const char *binary[] = {"\x00\x01\x02", "\x00\x01", "\x00"};
         size_t binary_size[] = {3, 2, 1};
         printf("\ndouble_trie binary data\n");
@@ -164,7 +164,7 @@ int main()
     printf("\nsingle_trie\n");
     printf("----------\n");
     for (i = 0; dict[i][0]; i++) {
-        single_trie btrie;
+        trie::single_trie btrie;
         printf("wordset %d: ", i);
         for (j = 0; dict[i][j]; j++) {
             key.assign(dict[i][j], length(dict[i][j]));

@@ -443,7 +443,7 @@ void double_trie::rhs_insert(size_type s, size_type r,
     index_[-lhs_->base(s)].index = 0;
     index_[-lhs_->base(s)].data = 0;
     free_index_.push_back(-lhs_->base(s));
-// XXX: check out the crash reason if base(s) is not set to zero.
+    // XXX: check out the crash reason if base(s) is not set to zero.
     lhs_->set_base(s, 0);
     stand_ = r;
     if (u > 0) {
@@ -460,16 +460,16 @@ void double_trie::rhs_insert(size_type s, size_type r,
     }
 
     size_type t = lhs_->create_transition(s, *remain);
-    // XXX: Check if remian + 1 exists, may related to duplicated key
     size_type i;
     if (*remain == key_type::kTerminator) {
-        i = next_index_++;
-        index_[i].data = value;
+        // remain consumed
+        i = find_index_entry(t);
         lhs_->set_base(t, -i);
+        index_[i].index = -1;
     } else {
         i = set_link(t, rhs_append(remain + 1));
-        index_[i].data = value;
     }
+    index_[i].data = value;
 
     // R-3
     t = lhs_->create_transition(s, ch);
@@ -493,13 +493,13 @@ void double_trie::insert(const key_type &key, const value_type &value)
     const char_type *p;
     size_type s = lhs_->go_forward(1, key.data(), &p);
 
-    // XXX: check p == null for duplicated key
-    if (!check_separator(s)) {
-        lhs_insert(s, p, value);
-        return;
-    }
     if (!p) {
         index_[-lhs_->base(s)].data = value;
+        return;
+    }
+
+    if (!check_separator(s)) {
+        lhs_insert(s, p, value);
         return;
     }
 
@@ -519,10 +519,11 @@ void double_trie::insert(const key_type &key, const value_type &value)
             break;
         }
     } while (*p++ != key_type::kTerminator);
-    if (r == 1) {
+    if (r == 1) {  // duplicated key
         index_[-lhs_->base(s)].data = value;
         return;
     }
+    assert(*(p - 1) != key_type::kTerminator);
     char_type mismatch = r - rhs_->base(rhs_->prev(r));
     rhs_insert(s, r, exists_, p, mismatch, value);
     return;
@@ -532,13 +533,13 @@ bool double_trie::search(const key_type &key, value_type *value) const
 {
     const char_type *p, *mismatch;
     size_type s = lhs_->go_forward(1, key.data(), &p);
-    if (!check_separator(s))
-        return false;
     if (!p) {
         if (value)
             *value = index_[-lhs_->base(s)].data;
         return true;
     }
+    if (!check_separator(s))
+        return false;
     size_type r = link_state(s);
     // skip a terminator
     if (rhs_->check_reverse_transition(r, key_type::kTerminator))
