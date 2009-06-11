@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
                 query = optarg;
                 break;
             case 't':
-                switch(atoi(optarg)) {
+                switch (atoi(optarg)) {
                     case 1:
                         type = SINGLE_TRIE;
                         break;

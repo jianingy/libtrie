@@ -703,7 +703,7 @@ void single_trie::create_branch(size_type s,
             extremum.min = *p;
         ++start;
     } while (*p++ != key_type::kTerminator);
-    common_.data[i] = 0; //  end common string
+    common_.data[i] = 0;  // end common string
 
     // check if already exists by checking if the last common char is
     // terminator
