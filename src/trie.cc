@@ -15,7 +15,7 @@ static trie_type find_archive_type(const char *archive)
     FILE *fp;
     char magic[16] = {0};
     if ((fp = fopen(archive, "r"))) {
-        size_t length = fread(magic, sizeof(magic) / sizeof(char) - 1, 1, fp);
+        size_t length = fread(magic, 1, sizeof(magic) / sizeof(char) - 1, fp);
         fclose(fp);
         if (strncmp(magic, "TWO_TRIE", length) == 0)
             return DOUBLE_TRIE;
