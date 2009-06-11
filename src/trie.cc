@@ -47,14 +47,27 @@ trie_interface *create_trie(const char *archive)
         throw bad_trie_archive("file magic error");
 }
 
+void trie_interface::insert(const char *inputs, size_t length,
+                            value_type value)
+{
+    insert(key_type(inputs, length), value);
+}
+
+bool trie_interface::search(const char *inputs, size_t length,
+                            value_type *value) const
+{
+    return search(key_type(inputs, length), value);
+}
+
 void trie_interface::read_from_text(const char *source, bool verbose)
 {
     FILE *file;
     if ((file = fopen(source, "r"))) {
         char fmt[LINE_MAX];
-        char key[LINE_MAX];
+        char cstr[LINE_MAX];
         int val;
         size_t lineno = 0;
+        key_type key;
 
         if (verbose)
             std::cerr <<  "building";
@@ -67,7 +80,7 @@ void trie_interface::read_from_text(const char *source, bool verbose)
                     std::cerr << lineno;
             }
             ++lineno;
-            if (fscanf(file, fmt, &val, key) != 2) {
+            if (fscanf(file, fmt, &val, cstr) != 2) {
                 if (verbose)  {
                     std::cerr << "build_trie: format error at line "
                               << lineno
@@ -75,7 +88,8 @@ void trie_interface::read_from_text(const char *source, bool verbose)
                 }
                 throw new bad_trie_source("format error");
             }
-            insert(key, strlen(key), val);
+            key.assign(cstr, strlen(cstr));
+            insert(key, val);
         }
         if (verbose)
             std::cerr << "..." << lineno << "." << std::endl;

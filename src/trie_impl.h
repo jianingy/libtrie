@@ -17,7 +17,6 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
-
 #include <stdint.h>
 
 #include <cstring>
@@ -72,74 +71,9 @@ T* resize(T *ptr, size_t old_size, size_t new_size)
 #endif
 }
 
-class trie_input_converter
-{
-  public:
-    typedef trie_interface::size_type size_type;
-    typedef trie_interface::char_type char_type;
-
-    static const char_type kCharsetSize = 257;
-    static const char_type kTerminator = kCharsetSize;
-
-    explicit trie_input_converter(size_t length = 8)
-        :inside_(NULL), inside_size_(0)
-    {
-        if (length)
-            resize_inside(length);
-    }
-
-    ~trie_input_converter()
-    {
-        resize(inside_, 0, 0);
-        inside_size_ = 0;
-    }
-
-    static char_type char_in(const char ch)
-    {
-        return static_cast<unsigned char>(ch + 1);
-    }
-
-    static char char_out(char_type ch)
-    {
-        return static_cast<char>(ch - 1);
-    }
-
-    const char_type *convert(const char *inputs,
-                             size_t length)
-    {
-        size_t i;
-
-        if (length > inside_size_)
-            resize_inside(length + 1);
-        for (i = 0; i < length; i++)
-            inside_[i] = char_in(inputs[i]);
-        inside_[i] = kTerminator;
-
-        return inside_;
-    }
-
-  protected:
-    void resize_inside(size_type size)
-    {
-        // align with 4k
-        size_type nsize = (((inside_size_ * 2 + size) >> 12) + 1) << 12;
-        inside_ = resize(inside_, inside_size_, nsize);
-        inside_size_ = nsize;
-    }
-  private:
-    char_type *inside_;
-    size_t inside_size_;
-};
-
 class basic_trie
 {
   public:
-    typedef trie_interface::value_type value_type;
-    typedef trie_interface::size_type size_type;
-    typedef trie_interface::char_type char_type;
-
-    static const char_type kCharsetSize = trie_input_converter::kCharsetSize;
-    static const char_type kTerminator = trie_input_converter::kTerminator;
     static const size_t kDefaultStateSize = 4096;
 
     typedef struct {
@@ -165,8 +99,8 @@ class basic_trie
     void clone(const basic_trie &trie);
     basic_trie &operator=(const basic_trie &trie);
     ~basic_trie();
-    void insert(const char *key, size_t length, value_type value);
-    bool search(const char *key, size_t length, value_type *value) const;
+    void insert(const key_type &key, const value_type &value);
+    bool search(const key_type &key, value_type *value) const;
     size_type create_transition(size_type s, char_type ch);
     size_type find_base(const char_type *inputs,
                         const extremum_type &extremum);
@@ -233,7 +167,7 @@ class basic_trie
                 return s;
             }
             s = t;
-        } while (*p++ != kTerminator);
+        } while (*p++ != key_type::kTerminator);
         *mismatch = NULL;
         return s;
     }
@@ -244,7 +178,7 @@ class basic_trie
     {
         assert(mismatch);
         const char_type *p = inputs;
-        while (*p != kTerminator)
+        while (*p != key_type::kTerminator)
             p++;
         do {
             size_type t = next(s, *p);
@@ -273,7 +207,7 @@ class basic_trie
                 return s;
             }
             s = t;
-        } while (*p++ != kTerminator);
+        } while (*p++ != key_type::kTerminator);
         *mismatch = NULL;
         return s;
     }
@@ -341,9 +275,7 @@ class basic_trie
         char_type ch;
         char_type *p;
 
-        for (ch = 1, p = targets;
-            ch < trie_input_converter::kCharsetSize + 1;
-            ch++) {
+        for (ch = 1, p = targets; ch < key_type::kCharsetSize + 1; ch++) {
             size_type t = next(s, ch);
             if (t >= header_->size)
                 break;
@@ -369,14 +301,12 @@ class basic_trie
     size_type max_state_;
     bool owner_;
     trie_relocator_interface<size_type> *relocator_;
-    mutable trie_input_converter converter_;
     mutable header_type compact_header_;
 };
 
 template<typename T>
-class trie_relocator: public trie_relocator_interface<basic_trie::size_type> {
+class trie_relocator: public trie_relocator_interface<size_type> {
   public:
-    typedef basic_trie::size_type size_type;
     typedef void (T::*relocate_function)(size_type, size_type);
     trie_relocator(T *who, relocate_function relocate)
         :who_(who), relocate_(relocate)
@@ -397,9 +327,6 @@ class trie_relocator: public trie_relocator_interface<basic_trie::size_type> {
 
 class double_trie: public trie_interface {
   public:
-    typedef basic_trie::size_type size_type;
-    typedef basic_trie::value_type value_type;
-
     // this struct should be 64 bytes long for compatible
     typedef struct {
         char magic[16];
@@ -411,8 +338,8 @@ class double_trie: public trie_interface {
     explicit double_trie(size_t size = basic_trie::kDefaultStateSize);
     explicit double_trie(const char *filename);
     ~double_trie();
-    void insert(const char *key, size_t length, value_type value);
-    bool search(const char *key, size_t length, value_type *value) const;
+    void insert(const key_type &key, const value_type &value);
+    bool search(const key_type &key, value_type *value) const;
     void build(const char *filename, bool verbose = false);
     const basic_trie *front_trie() const
     {
@@ -560,9 +487,9 @@ class double_trie: public trie_interface {
 
     size_t outdegree(size_type s) const
     {
-        basic_trie::char_type ch;
+        char_type ch;
         size_t degree = 0;
-        for (ch = 1; ch < basic_trie::kCharsetSize + 1; ch++) {
+        for (ch = 1; ch < key_type::kCharsetSize + 1; ch++) {
             size_type t = rhs_->next(s, ch);
             if (t >= rhs_->header()->size)
                 break;
@@ -577,7 +504,7 @@ class double_trie: public trie_interface {
     {
         size_type s = rhs_->prev(t);
         if (s > 0
-            && t == rhs_->next(s, basic_trie::kTerminator)
+            && t == rhs_->next(s, key_type::kTerminator)
             && count_referer(t) == 0) {
             // delete one
             remove_accept_state(t);
@@ -651,15 +578,11 @@ class double_trie: public trie_interface {
     void *mmap_;
     size_t mmap_size_;
     static const char magic_[16];
-    mutable trie_input_converter converter_;
 };
 
 class single_trie: public trie_interface
 {
   public:
-    typedef basic_trie::char_type char_type;
-    typedef basic_trie::size_type size_type;
-    typedef basic_trie::value_type value_type;
     typedef size_type suffix_type;
     typedef struct {
         char magic[16];
@@ -677,8 +600,8 @@ class single_trie: public trie_interface
     explicit single_trie(size_t size = 0);
     explicit single_trie(const char *filename);
     ~single_trie();
-    void insert(const char *key, size_t length, value_type value);
-    bool search(const char *key, size_t length, value_type *value) const;
+    void insert(const key_type &key, const value_type &value);
+    bool search(const key_type &key, value_type *value) const;
     void build(const char *filename, bool verbose);
 
     const basic_trie *trie()
@@ -695,11 +618,11 @@ class single_trie: public trie_interface
     {
         size_type i;
         for (i = start; i < header_->suffix_size && i < count; i++) {
-            if (suffix_[i] == basic_trie::kTerminator)
+            if (suffix_[i] == key_type::kTerminator)
                 fprintf(stderr, "[%d:#]", i);
-            else if (isgraph(trie_input_converter::char_out(suffix_[i])))
+            else if (isgraph(key_type::char_out(suffix_[i])))
                 fprintf(stderr, "[%d:%c]",
-                        i, trie_input_converter::char_out(suffix_[i]));
+                        i, key_type::char_out(suffix_[i]));
             else
                 fprintf(stderr, "[%d:%x]", i, suffix_[i]);
         }
@@ -735,7 +658,6 @@ class single_trie: public trie_interface
     void *mmap_;
     size_t mmap_size_;
     static const char magic_[16];
-    mutable trie_input_converter converter_;
 };
 #endif  // TRIE_IMPL_H_
 

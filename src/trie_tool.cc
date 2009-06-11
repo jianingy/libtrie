@@ -16,7 +16,7 @@ static void *
 query_trie(const char *query, const char *index, bool verbose)
 {
     int retval = 0;
-    trie_interface::value_type value;
+    value_type value;
     trie_interface *mtrie = create_trie(index);
     if (mtrie->search(query, strlen(query), &value)) {
         std::cout << value << std::endl;
