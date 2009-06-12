@@ -515,7 +515,12 @@ class double_trie: public trie_interface {
 
     void relocate_front(size_type s, size_type t)
     {
-        if (lhs_->base(s) < 0) {
+        /* need to check index_[-lhs_->base(s)].index > 0
+         * 'cause we will store a zero in index to indicate
+         * the searching key has no accept state but its 
+         * value has been stored into index table
+         */
+        if (lhs_->base(s) < 0 && index_[-lhs_->base(s)].index > 0) {
             size_type r = link_state(s);
             if (refer_.find(r) != refer_.end()) {
                 refer_[r].referer.erase(s);

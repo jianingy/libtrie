@@ -403,10 +403,15 @@ double_trie::rhs_append(const char_type *inputs)
 void
 double_trie::lhs_insert(size_type s, const char_type *inputs, value_type value)
 {
-    // XXX: check inputs[0] == kTerminator for duplicated key
+    size_t i;
     s = lhs_->create_transition(s, inputs[0]);
-    s = set_link(s, rhs_append(inputs + 1));
-    index_[s].data = value;
+    if (*inputs == key_type::kTerminator) {
+        i = find_index_entry(s);
+        index_[i].index = 0;
+    } else {
+        i = set_link(s, rhs_append(inputs + 1));
+    }
+    index_[i].data = value;
 }
 
 void double_trie::rhs_clean_more(size_type t)
@@ -462,14 +467,13 @@ void double_trie::rhs_insert(size_type s, size_type r,
     size_type t = lhs_->create_transition(s, *remain);
     size_type i;
     if (*remain == key_type::kTerminator) {
-        // remain consumed
         i = find_index_entry(t);
-        lhs_->set_base(t, -i);
-        index_[i].index = -1;
+        index_[-lhs_->base(t)].data = value;
+        index_[-lhs_->base(t)].index = 0;
     } else {
         i = set_link(t, rhs_append(remain + 1));
+        index_[i].data = value;
     }
-    index_[i].data = value;
 
     // R-3
     t = lhs_->create_transition(s, ch);
@@ -494,6 +498,7 @@ void double_trie::insert(const key_type &key, const value_type &value)
     size_type s = lhs_->go_forward(1, key.data(), &p);
 
     if (!p) {
+        // duplicated key found
         index_[-lhs_->base(s)].data = value;
         return;
     }
@@ -502,9 +507,9 @@ void double_trie::insert(const key_type &key, const value_type &value)
         lhs_insert(s, p, value);
         return;
     }
-
-    // skip dummy terminator
+    assert(index_[-lhs_->base(s)].index > 0);
     size_type r = link_state(s);
+    // skip dummy terminator
     if (rhs_->check_reverse_transition(r, key_type::kTerminator)
         && rhs_->prev(r) > 1)
         r = rhs_->prev(r);
@@ -518,12 +523,11 @@ void double_trie::insert(const key_type &key, const value_type &value)
         } else {
             break;
         }
+        if (r == 1) {  // duplicated key
+            index_[-lhs_->base(s)].data = value;
+            return;
+        }
     } while (*p++ != key_type::kTerminator);
-    if (r == 1) {  // duplicated key
-        index_[-lhs_->base(s)].data = value;
-        return;
-    }
-    assert(*(p - 1) != key_type::kTerminator);
     char_type mismatch = r - rhs_->base(rhs_->prev(r));
     rhs_insert(s, r, exists_, p, mismatch, value);
     return;
@@ -540,6 +544,7 @@ bool double_trie::search(const key_type &key, value_type *value) const
     }
     if (!check_separator(s))
         return false;
+    assert(index_[-lhs_->base(s)].index > 0);
     size_type r = link_state(s);
     // skip a terminator
     if (rhs_->check_reverse_transition(r, key_type::kTerminator))
