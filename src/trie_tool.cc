@@ -13,16 +13,25 @@
 using namespace trie;
 
 static void *
-query_trie(const char *query, const char *index, bool verbose)
+query_trie(const char *query, const char *index, bool prefix, bool verbose)
 {
     int retval = 0;
     value_type value;
     trie_interface *mtrie = create_trie(index);
-    if (mtrie->search(query, strlen(query), &value)) {
-        std::cout << value << std::endl;
+    key_type key(query, strlen(query));
+    if (prefix) {
+        result_type result;
+        mtrie->prefix_search(key, &result);
+        result_type::const_iterator it;
+        for (it = result.begin(); it != result.end(); it++)
+            std::cout << it->first.c_str() << " = " << it->second << std::endl;
     } else {
-        std::cerr << query << " not found." << std::endl;
-        retval = 1;
+        if (mtrie->search(key, &value)) {
+            std::cout << value << std::endl;
+        } else {
+            std::cerr << query << " not found." << std::endl;
+            retval = 1;
+        }
     }
     delete mtrie;
     exit(retval);
@@ -50,6 +59,7 @@ static void help_message()
                  "        -b|--build SOURCE     build from SOURCE\n"
                  "        -h|--help             help message\n"
                  "        -q|--query QUERY      lookup QUERY in archive\n"
+                 "        -p|--prefix           prefix mode query\n"
                  "        -t|--type TYPE        archive type\n"
                  "        -v|--verbose          verbose\n\n"
                  "SOURCE FORMAT:\n"
@@ -68,12 +78,14 @@ int main(int argc, char *argv[])
     const char *index = NULL, *source = NULL, *query = NULL;
     trie_type type = DOUBLE_TRIE;
     bool verbose = false;
+    bool prefix = false;
 
     while (true) {
         static struct option long_options[] =
         {
             {"build", required_argument, 0, 'b'},
             {"help", no_argument, 0, 'h'},
+            {"prefix", no_argument, 0, 'p'},
             {"query", required_argument, 0, 'q'},
             {"type", required_argument, 0, 't'},
             {"verbose", no_argument, 0, 'v'},
@@ -81,7 +93,7 @@ int main(int argc, char *argv[])
         };
         int option_index;
 
-        c = getopt_long(argc, argv, "b:hq:t:v", long_options, &option_index);
+        c = getopt_long(argc, argv, "b:hpq:t:v", long_options, &option_index);
         if (c == -1) break;
 
         switch (c) {
@@ -90,6 +102,9 @@ int main(int argc, char *argv[])
                 return 0;
             case 'b':
                 source = optarg;
+                break;
+            case 'p':
+                prefix = true;
                 break;
             case 'q':
                 query = optarg;
@@ -118,7 +133,7 @@ int main(int argc, char *argv[])
         if (source)
             build_trie(source, index, type, verbose);
         else if (query)
-            query_trie(query, index, verbose);
+            query_trie(query, index, prefix, verbose);
     }
     help_message();
 

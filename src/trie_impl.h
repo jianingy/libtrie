@@ -623,7 +623,7 @@ class single_trie: public trie_interface
         return suffix_;
     }
 
-    void trace_suffix(size_type start, size_type count)
+    void trace_suffix(size_type start, size_type count) const
     {
         size_type i;
         for (i = start; i < header_->suffix_size && i < count; i++) {
