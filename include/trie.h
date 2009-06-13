@@ -103,6 +103,12 @@ class key_type {
 		return ch;
 	}
 
+	void clear()
+	{
+		data_[0] = kTerminator;
+		length_ = 0;
+	}
+
 	const char *c_str() const
 	{
         size_t i;
