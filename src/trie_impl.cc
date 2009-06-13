@@ -241,7 +241,7 @@ basic_trie::prefix_search(const key_type &key, result_type *result) const
     result_type prefix;
     key_type store;
     size_type s = go_forward(1, key.data(), &p);
-    if (p)
+    if (p < key.data() + key.length())
         return 0;
     store.assign(key.data(), key.length());
     prefix_search(s, &store, &prefix);
@@ -604,8 +604,26 @@ double_trie::prefix_search(const key_type &key, result_type *result) const
     key_type media;
 
     size_type s = lhs_->go_forward(1, key.data(), &p);
-    if (p)
+    if (p < key.data() + key.length()) {
+        if (lhs_->base(s) < 0) {
+            value_type value = index_[-lhs_->base(s)].data;
+            size_type r = link_state(s);
+            media.assign(key.data(), p - key.data());
+            if (rhs_->check_reverse_transition(r, key_type::kTerminator))
+                r = rhs_->prev(r);
+            if (*p != r - rhs_->base(rhs_->prev(r)))
+                return 0;
+            while (r > 1) {
+                media.push(r - rhs_->base(rhs_->prev(r)));
+                r = rhs_->prev(r);
+            }
+            if (result)
+                result->push_back(std::pair<key_type, value_type>
+                                  (media, value));
+            return 1;
+        }
         return 0;
+    }
     media.assign(key.data(), key.length());
     lhs_->prefix_search(s, &media, &prefix);
 	result_type::const_iterator it;
@@ -867,8 +885,22 @@ single_trie::prefix_search(const key_type &key, result_type *result) const
     key_type media;
 
     size_type s = trie_->go_forward(1, key.data(), &p);
-    if (p)
+    if (p < key.data() + key.length()) {
+        if (trie_->base(s) < 0) {
+            media.assign(key.data(), p - key.data());
+            size_type start = -trie_->base(s);
+            if (*p != suffix_[start])
+                return 0;
+            while (suffix_[start] != key_type::kTerminator)
+                media.push(suffix_[start++]);
+            start++;
+            if (result)
+                result->push_back(std::pair<key_type, value_type>
+                                 (key, suffix_[start]));
+            return 1;
+        }
         return 0;
+    }
     media.assign(key.data(), key.length());
     trie_->prefix_search(s, &media, &prefix);
 	result_type::const_iterator it;

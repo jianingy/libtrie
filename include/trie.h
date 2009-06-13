@@ -179,6 +179,8 @@ class trie_interface {
                         value_type value);
     virtual bool search(const char *inputs, size_t length,
                         value_type *value) const;
+    virtual size_t prefix_search(const key_type &key,
+	                             result_type *result) const = 0;
     virtual void build(const char *filename, bool verbose = false) = 0;
 	virtual void read_from_text(const char *source, bool verbose = false);
     virtual ~trie_interface() = 0;
