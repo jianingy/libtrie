@@ -605,33 +605,38 @@ double_trie::prefix_search(const key_type &key, result_type *result) const
     key_type media;
 
     size_type s = lhs_->go_forward(1, key.data(), &p);
-    if (p && p < key.data() + key.length()) {
-        if (lhs_->base(s) < 0) {
-            value_type value = index_[-lhs_->base(s)].data;
+    if (!p)
+        s = lhs_->prev(s);
+    if (lhs_->base(s) < 0) {
+        value_type value = index_[-lhs_->base(s)].data;
+        if (p) {
             size_type r = link_state(s);
             media.assign(key.data(), p - key.data());
             if (rhs_->check_reverse_transition(r, key_type::kTerminator))
                 r = rhs_->prev(r);
-            if (*p != r - rhs_->base(rhs_->prev(r)))
-                return 0;
             while (r > 1) {
-                media.push(r - rhs_->base(rhs_->prev(r)));
+                char_type ch = r - rhs_->base(rhs_->prev(r));
+                if (*p != key_type::kTerminator && *(p++) != ch)
+                    return 0;
+                media.push(ch);
                 r = rhs_->prev(r);
             }
-            if (result)
-                result->push_back(std::pair<key_type, value_type>
-                                  (media, value));
-            return 1;
+        } else {
+            media.assign(key.data(), key.length());
         }
-        return 0;
+        if (result)
+            result->push_back(std::pair<key_type, value_type>
+                    (media, value));
+        return 1;
     }
     media.assign(key.data(), key.length());
     lhs_->prefix_search(s, &media, &prefix);
 	result_type::const_iterator it;
 	for (it = prefix.begin(); it != prefix.end(); it++) {
-        value_type value = index_[-it->second].data;
-        if (index_[-it->second].index > 0) {
-            size_type r = accept_[index_[-it->second].index].accept;
+        size_type i = -lhs_->base(it->second);
+        value_type value = index_[i].data;
+        if (index_[i].index > 0) {
+            size_type r = accept_[index_[i].index].accept;
             media.assign(it->first.data(), it->first.length());
             // skip a terminator
             if (rhs_->check_reverse_transition(r, key_type::kTerminator))
