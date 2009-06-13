@@ -234,6 +234,39 @@ bool basic_trie::search(const key_type &key, value_type *value) const
     return true;
 }
 
+size_t basic_trie::prefix_search(const key_type &key, result_type *result)
+{
+    const char_type *p;
+    result_type prefix;
+    key_type store;
+    size_type s = go_forward(1, key.data(), &p);
+    store.assign(key.data(), key.length());
+    prefix_search(s, &store, &prefix);
+	result_type::const_iterator it;
+	for (it = prefix.begin(); it != prefix.end(); it++) {
+        if (result)
+            result->push_back(*it);
+    }
+    return prefix.size();
+}
+
+size_t basic_trie::prefix_search(size_type s, key_type *key, result_type *result)
+{
+    char_type targets[key_type::kCharsetSize + 1];
+
+    if (find_exist_target(s, targets, NULL)) {
+        for (char_type *p = targets; *p; p++) {
+            size_type t = next(s, *p);
+            key->push(*p);
+            prefix_search(t, key, result);
+            key->pop();
+        }
+    } else {
+        result->push_back(std::pair<key_type, value_type>(*key, base(s)));
+    }
+    return 0;
+}
+
 void basic_trie::trace(size_type s) const
 {
     size_type num_target;

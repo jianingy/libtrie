@@ -1,6 +1,8 @@
 #ifndef TRIE_H_
 #define TRIE_H_
 
+#include <map>
+#include <vector>
 #include <cstdlib>
 #include <stdexcept>
 
@@ -29,23 +31,51 @@ class key_type {
     static const char_type kCharsetSize = 257;
     static const char_type kTerminator = kCharsetSize;
 
-	key_type(): data_(NULL), capacity_(0) {}
+	key_type()
+		:cstr_(NULL), cstr_capacity_(0),
+		 data_(NULL), data_capacity_(0),
+		 length_(0)
+	{}
+
 	explicit key_type(const char *data, size_t length)
-        :data_(NULL), capacity_(0)
+        :cstr_(NULL), cstr_capacity_(0),
+		 data_(NULL), data_capacity_(0),
+		 length_(0)
 	{
         assign(data, length);
+	}
+
+	explicit key_type(const key_type &key)
+        :cstr_(NULL), cstr_capacity_(0),
+		 data_(NULL), data_capacity_(0),
+		 length_(0)
+	{
+		assign(key.data(), key.length());
+	}
+
+	const key_type &operator=(const key_type &rhs)
+	{
+		assign(rhs.data(), rhs.length());
+		return *this;
 	}
 
     ~key_type()
     {
 		free(data_);
-        capacity_ = 0;
+		free(cstr_);
+        data_capacity_ = 0;
+        cstr_capacity_ = 0;
     }
 
     const char_type *data() const
-    {
-        return data_;
-    }
+	{ 
+		return data_; 
+	}
+
+	size_t length() const 
+	{
+		return length_;	
+	}
 
     static char_type char_in(const char ch)
     {
@@ -57,24 +87,80 @@ class key_type {
         return static_cast<char>(ch - 1);
     }
 
+	void push(char_type ch)
+	{
+        if (length_ + 1 >= data_capacity_)
+			resize_data(1);
+		data_[length_++] = ch;
+		data_[length_] = kTerminator;
+	}
+
+	char_type pop()
+	{
+		char_type ch;
+		ch = data_[length_--];
+		data_[length_] = kTerminator;
+		return ch;
+	}
+
+	const char *c_str() const
+	{
+        size_t i;
+        if (cstr_capacity_ < data_capacity_)
+			resize_cstr();
+        for (i = 0; data_[i] != kTerminator ; i++)
+            cstr_[i] = char_out(data_[i]);
+        cstr_[i] = '\0';
+		return cstr_;
+	}
+
     void assign(const char *data, size_t length)
     {
         size_t i;
-        if (length + 1 >= capacity_) {
-			size_t nsize = (capacity_ + length + 1) * 2;
-			data_ = static_cast<char_type *>
-			        (realloc(data_, nsize * sizeof(char_type)));
-			capacity_ = nsize;
-		}
+        if (length + 1 >= data_capacity_)
+			resize_data(length);
         for (i = 0; i < length; i++)
             data_[i] = char_in(data[i]);
         data_[i] = kTerminator;
+		length_ = length;
     }
 
+	void assign(const char_type *data, size_t length)
+	{
+        size_t i;
+        if (length + 1 >= data_capacity_)
+			resize_data(length);
+        for (i = 0; i < length; i++)
+            data_[i] = data[i];
+        data_[i] = kTerminator;
+		length_ = length;
+	}
+
+protected:
+  	void resize_data(size_t size)
+	{
+		size_t nsize = (data_capacity_ + size + 1) * 2;	
+		data_ = static_cast<char_type *>
+			(realloc(data_, nsize * sizeof(char_type)));
+		data_capacity_ = nsize;
+	}
+
+	void resize_cstr() const
+	{
+		cstr_ = static_cast<char *>
+			(realloc(cstr_, data_capacity_ * sizeof(char)));
+		cstr_capacity_ = data_capacity_;
+	}
+
   private:
+  	mutable char *cstr_;
+	mutable size_t cstr_capacity_;
   	char_type *data_;
-	size_t capacity_;
+	size_t data_capacity_;
+	size_t length_;
 };
+
+typedef std::vector<std::pair<key_type, value_type> > result_type;
 
 class trie_interface {
   public:

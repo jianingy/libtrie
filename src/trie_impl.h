@@ -101,6 +101,8 @@ class basic_trie
     ~basic_trie();
     void insert(const key_type &key, const value_type &value);
     bool search(const key_type &key, value_type *value) const;
+    size_t prefix_search(const key_type &key, result_type *result);
+    size_t prefix_search(size_type s, key_type *key, result_type *result);
     size_type create_transition(size_type s, char_type ch);
     size_type find_base(const char_type *inputs,
                         const extremum_type &extremum);
