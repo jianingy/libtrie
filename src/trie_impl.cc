@@ -257,7 +257,7 @@ size_t basic_trie::prefix_search_aux(size_type s,
                 continue;
             size_type t = next(s, *p);
             store->push(*p);
-            if (miss && *miss == key_type::kTerminator)
+            if (!miss || *miss == key_type::kTerminator)
                 prefix_search_aux(t, miss, store, result);
             else
                 prefix_search_aux(t, miss + 1, store, result);
