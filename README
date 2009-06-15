@@ -1,2 +1,21 @@
-An implementation of Two-Trie and Tail-Trie using Double-Array Structure
-========================================================================
+= An implementation of Two-Trie and Tail-Trie
+
+This is an implementation of Two-Trie and Tail-Trie using J.Aoe's Double-
+Array Structure. Trie is an associative container where the keys are strings.
+It is very fast in searching keys. The searching performance is O(m) where m
+is the length of the key. This also means that the number of items in trie
+has no effect with its searching performance. For more information about trie
+please refer [http://en.wikipedia.org/wiki/Trie Trie in Wikipedia].
+
+== Features
+
+- Very fast searching performance.
+- Index file can be mmap into memory. Which means it can be easily shared
+  with multiple process.
+- Supported Prefix Search.
+
+== References
+
+. J. Aoe, "An Efficient Digital Search Algorithm by Using a Double-Array Structure", IEEE Trans. Software Eng., vol. 15, no. 9, pp. 1,066-1,077, 1989.
+. J. Aoe, K. Morimoto, and T. Sato, "An Efficient Implementation of Trie Structure", Software Practices and Experiences vol. 22, no. 9, pp. 695-721, 1992.
+. J. Aoe, K. Morimoto, M. Shishibori, and K. Park, "A Trie Compaction Algorithm for a Large Set of Keys", IEEE Trans. Knowledge and Data Eng., vol. 8, no. 3, pp 476-491, 1996
