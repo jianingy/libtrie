@@ -14,6 +14,25 @@ please refer [http://en.wikipedia.org/wiki/Trie Trie in Wikipedia].
   with multiple process.
 - Supported Prefix Search.
 
+== License
+
+This project is under BSD License
+
+== Authors
+
+Jianing Yang (jianingy.yang at gmail dot com)
+
+== Download
+
+You can download this project in either [http://github.com/jianingy/libtrie/zipball/master zip] or [http://github.com/jianingy/libtrie/tarball/master tar] formats.
+
+You can also clone the project with [http://git-scm.com/ Git] by running
+
+~~~
+$ git clone git://github.com/jianingy/libtrie
+~~~
+
+
 == References
 
 . J. Aoe, "An Efficient Digital Search Algorithm by Using a Double-Array Structure", IEEE Trans. Software Eng., vol. 15, no. 9, pp. 1,066-1,077, 1989.
