@@ -1,103 +1,58 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-	<title>jianingy/libtrie @ GitHub</title>
-	
-	<style type="text/css">
-		body {
-  		margin-top: 1.0em;
-  		background-color: #3e9740;
-		  font-family: "helvetica"; 
-  		color: #ffffff;
-    }
-    #container {
-      margin: 0 auto;
-      width: 700px;
-    }
-		h1 { font-size: 3.8em; color: #c168bf; margin-bottom: 3px; }
-		h1 .small { font-size: 0.4em; }
-		h1 a { text-decoration: none }
-		h2 { font-size: 1.5em; color: #c168bf; }
-    h3 { text-align: center; color: #c168bf; }
-    a { color: #c168bf; }
-    .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
-    .download { float: right; }
-		pre { background: #000; color: #fff; padding: 15px;}
-    hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
-    .footer { text-align:center; padding-top:30px; font-style: italic; }
-	</style>
-	
+<meta name="generator" content="jemdoc, see http://jemdoc.jaboc.net/" />
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link rel="stylesheet" href="jemdoc.css" type="text/css" />
+<title>An implementation of Two-Trie and Tail-Trie</title>
 </head>
-
 <body>
-  <a href="http://github.com/jianingy/libtrie"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
-  
-  <div id="container">
-
-    <div class="download">
-      <a href="http://github.com/jianingy/libtrie/zipball/master">
-        <img border="0" width="90" src="http://github.com/images/modules/download/zip.png"></a>
-      <a href="http://github.com/jianingy/libtrie/tarball/master">
-        <img border="0" width="90" src="http://github.com/images/modules/download/tar.png"></a>
-    </div>
-      
-    <h1><a href="http://github.com/jianingy/libtrie">libtrie</a> 
-      <span class="small">by <a href="http://github.com/jianingy">jianingy</a></span></h1>
-
-    <div class="description">
-      An Implementation of Two-Trie and Tail-Trie using Double Array
-    </div>
-
-    <p>= An implementation of Two-Trie and Tail-Trie
- 
-This is an implementation of Two-Trie and Tail-Trie using J.Aoe's Double-
-Array Structure. Trie is an associative container where the keys are strings.
-It is very fast in searching keys. The searching performance is O(m) where m
-is the length of the key. This also means that the number of items in trie
-has no effect with its searching performance. For more information about trie
-please refer [http://en.wikipedia.org/wiki/Trie Trie in Wikipedia].
- 
-== Features
- 
-- Very fast searching performance.
-- Index file can be mmap into memory. Which means it can be easily shared
-  with multiple process.
-- Supported Prefix Search.
- 
-== References
- 
-. J. Aoe, "An Efficient Digital Search Algorithm by Using a Double-Array Structure", IEEE Trans. Software Eng., vol. 15, no. 9, pp. 1,066-1,077, 1989.
-. J. Aoe, K. Morimoto, and T. Sato, "An Efficient Implementation of Trie Structure", Software Practices and Experiences vol. 22, no. 9, pp. 695-721, 1992.
-. J. Aoe, K. Morimoto, M. Shishibori, and K. Park, "A Trie Compaction Algorithm for a Large Set of Keys", IEEE Trans. Knowledge and Data Eng., vol. 8, no. 3, pp 476-491, 1996
- </p><h2>License</h2>
-<p>BSD</p>
+<a href="http://github.com/jianingy/libtrie"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+<div id="layout-content">
+<div id="toptitle">
+<h1>An implementation of Two-Trie and Tail-Trie</h1>
+</div>
+<p>This is an implementation of Two-Trie and Tail-Trie using J.Aoe&rsquo;s Double-Array Structure. 
+Trie is an associative container where the keys are strings.
+It is very fast in searching keys. 
+The searching performance is O(m) where m is the length of the key. 
+This also means that the number of items in trie has no effect with its searching performance. 
+For more information about trie please refer <a href="http://en.wikipedia.org/wiki/Trie">Trie in Wikipedia</a>.</p>
+<h2>Features</h2>
+<ul>
+<li><p>Very fast searching performance.</p>
+</li>
+<li><p>Index file can be mmapped into memory which means it can be easily shared with multiple process.</p>
+</li>
+<li><p>Supported Prefix Search.</p>
+</li>
+</ul>
+<h2>License</h2>
+<p>This project is under BSD License</p>
 <h2>Authors</h2>
-<p>Jianing Yang (jianingy.yang@gmail.com)<br/><br/>      </p>
-<h2>Contact</h2>
-<p>Jianing Yang (jianingy.yang@gmail.com)<br/>      </p>
-
-
-    <h2>Download</h2>
-    <p>
-      You can download this project in either
-      <a href="http://github.com/jianingy/libtrie/zipball/master">zip</a> or
-      <a href="http://github.com/jianingy/libtrie/tarball/master">tar</a> formats.
-    </p>
-    <p>You can also clone the project with <a href="http://git-scm.com">Git</a>
-      by running:
-      <pre>$ git clone git://github.com/jianingy/libtrie</pre>
-    </p>
-      
-    <div class="footer">
-      get the source code on GitHub : <a href="http://github.com/jianingy/libtrie">jianingy/libtrie</a>
-    </div>
-    
-  </div>
-
-  
+<p><a href="http://github.com/jianingy">Jianing Yang</a> (<a href="mailto:jianingy.yang@gmail.com">jianingy.yang at gmail dot com</a>)</p>
+<h2>Download</h2>
+<p>You can download this project in either <a href="http://github.com/jianingy/libtrie/zipball/master">zip</a> or <a href="http://github.com/jianingy/libtrie/tarball/master">tar</a> formats.</p>
+<p>You can also clone the project with <a href="http://git-scm.com/">Git</a> by running</p>
+<div class="codeblock">
+<div class="blockcontent"><pre>
+$ git clone git://github.com/jianingy/libtrie
+</pre></div></div>
+<h2>References</h2>
+<ol>
+<li><p>J. Aoe, &ldquo;An Efficient Digital Search Algorithm by Using a Double-Array Structure&rdquo;, IEEE Trans. Software Eng., vol. 15, no. 9, pp. 1,066-1,077, 1989.</p>
+</li>
+<li><p>J. Aoe, K. Morimoto, and T. Sato, &ldquo;An Efficient Implementation of Trie Structure&rdquo;, Software Practices and Experiences vol. 22, no. 9, pp. 695-721, 1992.</p>
+</li>
+<li><p>J. Aoe, K. Morimoto, M. Shishibori, and K. Park, &ldquo;A Trie Compaction Algorithm for a Large Set of Keys&rdquo;, IEEE Trans. Knowledge and Data Eng., vol. 8, no. 3, pp 476-491, 1996</p>
+</li>
+</ol>
+<div id="footer">
+<div id="footer-text">
+Page generated 2009-06-15 22:27:35 CST, by <a href="http://jemdoc.jaboc.net/">jemdoc</a>.
+</div>
+</div>
+</div>
 </body>
 </html>
