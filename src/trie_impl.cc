@@ -238,37 +238,33 @@ size_t
 basic_trie::prefix_search(const key_type &key, result_type *result) const
 {
     const char_type *p;
-    result_type prefix;
-    key_type store;
     size_type s = go_forward(1, key.data(), &p);
-    if (p < key.data() + key.length())
-        return 0;
-    store.assign(key.data(), key.length());
-    prefix_search(s, &store, &prefix);
-	result_type::const_iterator it;
-	for (it = prefix.begin(); it != prefix.end(); it++) {
-        if (result)
-            result->push_back(std::pair<key_type, value_type>
-                              (it->first, base(it->second)));
-    }
-    return prefix.size();
+    key_type store(key);
+    prefix_search_aux(s, p, &store, result);
+    return result->size();
 }
 
-size_t basic_trie::prefix_search(size_type s, key_type *key,
-                                 result_type *result) const
+size_t basic_trie::prefix_search_aux(size_type s,
+                                     const char_type *miss,
+                                     key_type *store,
+                                     result_type *result) const
 {
     char_type targets[key_type::kCharsetSize + 1];
 
     if (find_exist_target(s, targets, NULL)) {
         for (char_type *p = targets; *p; p++) {
+            if (miss && *miss != key_type::kTerminator && *miss != *p)
+                continue;
             size_type t = next(s, *p);
-            key->push(*p);
-            prefix_search(t, key, result);
-            key->pop();
+            store->push(*p);
+            if (miss && *miss == key_type::kTerminator)
+                prefix_search_aux(t, miss, store, result);
+            else
+                prefix_search_aux(t, miss + 1, store, result);
+            store->pop();
         }
     } else {
-        if (result)
-            result->push_back(std::pair<key_type, value_type>(*key, s));
+        result->push_back(std::pair<key_type, value_type>(*store, base(s)));
     }
     return 0;
 }
@@ -601,70 +597,46 @@ size_t
 double_trie::prefix_search(const key_type &key, result_type *result) const
 {
     const char_type *p;
-    result_type prefix;
-    key_type media;
-
     size_type s = lhs_->go_forward(1, key.data(), &p);
-    if (!p)
-        s = lhs_->prev(s);
-    if (lhs_->base(s) < 0) {
-        value_type value = index_[-lhs_->base(s)].data;
-        if (p) {
-            size_type r = link_state(s);
-            media.assign(key.data(), p - key.data());
-            if (rhs_->check_reverse_transition(r, key_type::kTerminator))
-                r = rhs_->prev(r);
-            while (r > 1) {
-                char_type ch = r - rhs_->base(rhs_->prev(r));
-                if (*p != key_type::kTerminator && *(p++) != ch)
-                    return 0;
-                media.push(ch);
-                r = rhs_->prev(r);
-            }
-        } else {
-            media.assign(key.data(), key.length());
-        }
-        if (result)
-            result->push_back(std::pair<key_type, value_type>
-                    (media, value));
-        return 1;
-    }
+    key_type store;
     if (p)
-        media.assign(key.data(), p - key.data());
+        store.assign(key.data(), p - key.data());
     else
-        media.assign(key.data(), key.length());
-    lhs_->prefix_search(s, &media, &prefix);
-	result_type::const_iterator it;
-	for (it = prefix.begin(); it != prefix.end(); it++) {
-        size_type i = -lhs_->base(it->second);
-        value_type value = index_[i].data;
-        if (index_[i].index > 0) {
-            size_type r = link_state(it->second);
-            media.assign(it->first.data(), it->first.length());
-            // skip a terminator
-            if (rhs_->check_reverse_transition(r, key_type::kTerminator))
-                r = rhs_->prev(r);
-            const char_type *q = p;
-            bool flag = false;
-            while (r > 1) {
-                char_type ch = r - rhs_->base(rhs_->prev(r));
-                if (q && *q != key_type::kTerminator && *(q++) != ch) {
-                    flag = true;
-                }
-                media.push(ch);
-                r = rhs_->prev(r);
-            }
-            if (flag) continue;
-            if (result)
-                result->push_back(std::pair<key_type, value_type>
-                                  (media, value));
-        } else {
-            if (result)
-                result->push_back(std::pair<key_type, value_type>
-                                  (it->first, value));
+        store.assign(key.data(), key.length());
+    lhs_->prefix_search_aux(s, p, &store, result);
+	result_type::iterator it;
+	for (it = result->begin(); it != result->end(); it++) {
+        size_t i = -it->second;
+        if (index_[i].index == 0) {
+            it->second = index_[i].data; 
+            continue;
         }
+        const char_type *miss = p;
+        bool fail = false;
+        size_type r = accept_[index_[i].index].accept;
+        // skip a terminator
+        if (rhs_->check_reverse_transition(r, key_type::kTerminator))
+            r = rhs_->prev(r);
+        do {
+            char_type ch = r - rhs_->base(rhs_->prev(r));
+            r = rhs_->prev(r);
+            if (miss && *miss != key_type::kTerminator) {
+                if (!rhs_->check_transition(r, rhs_->next(r, *miss))) {
+                    fail = true;
+                    break;
+                }
+                miss++;
+            }
+            it->first.push(ch);
+        } while (r > 1);
+        if (fail || *miss != key_type::kTerminator) {
+            --it;
+            result->erase(it + 1);
+            continue;
+        }
+        it->second = index_[i].data;
     }
-    return prefix.size();
+    return result->size();
 }
 
 void double_trie::build(const char *filename, bool verbose)
@@ -897,56 +869,41 @@ size_t
 single_trie::prefix_search(const key_type &key, result_type *result) const
 {
     const char_type *p;
-    result_type prefix;
-    key_type media;
-
     size_type s = trie_->go_forward(1, key.data(), &p);
-    if (!p)
-        s = trie_->prev(s);
-    if (trie_->base(s) < 0) {
-        size_type start = -trie_->base(s);
-        if (p) {
-            media.assign(key.data(), p - key.data());
-            while (suffix_[start] != key_type::kTerminator) {
-                if (*p != key_type::kTerminator && *(p++) != suffix_[start])
-                    return 0;
-                media.push(suffix_[start++]);
-            }
-            if (*p != key_type::kTerminator)
-                return 0;
-            start++;
-        }
-        if (result)
-            result->push_back(std::pair<key_type, value_type>
-                    (media, suffix_[start]));
-        return 1;
-    }
+    key_type store;
     if (p)
-        media.assign(key.data(), p - key.data());
+        store.assign(key.data(), p - key.data());
     else
-        media.assign(key.data(), key.length());
-    trie_->prefix_search(s, &media, &prefix);
-	result_type::const_iterator it;
-	for (it = prefix.begin(); it != prefix.end(); it++) {
-        media.assign(it->first.data(), it->first.length());
-        size_type start = -trie_->base(it->second);
-        value_type value;
-        bool flag = false;
-        for (; suffix_[start] != key_type::kTerminator; start++) {
-            const char_type *q = p;
-            if (q && *q != key_type::kTerminator && *(q++) != suffix_[start]) {
-                flag = true;
-                break;
-            }
-            media.push(suffix_[start]);
-        }
-        if (flag)
+        store.assign(key.data(), key.length());
+    trie_->prefix_search_aux(s, p, &store, result);
+	result_type::iterator it;
+	for (it = result->begin(); it != result->end(); it++) {
+        size_t start = -it->second;
+        const char_type *miss = p;
+        bool fail = false;
+        if (it->first.data()[it->first.length() - 1] 
+            == key_type::kTerminator) {
+            it->second = suffix_[start];
             continue;
-        value = suffix_[start + 1];
-        if (result)
-            result->push_back(std::pair<key_type, value_type>(media, value));
+        }
+        for (; suffix_[start] != key_type::kTerminator; start++) {
+            if (miss && *miss != key_type::kTerminator) {
+                if (*miss != suffix_[start]) {
+                    fail = true;
+                    break;
+                }
+                miss++;
+            }
+            it->first.push(suffix_[start]);
+        }
+        if (fail || *miss != key_type::kTerminator) {
+            --it;
+            result->erase(it + 1);
+            continue;
+        }
+        it->second = suffix_[start + 1];
     }
-    return prefix.size();
+    return result->size();
 }
 
 void single_trie::build(const char *filename, bool verbose)
