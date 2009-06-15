@@ -101,6 +101,11 @@ class basic_trie
     ~basic_trie();
     void insert(const key_type &key, const value_type &value);
     bool search(const key_type &key, value_type *value) const;
+    size_t prefix_search(const key_type &key, result_type *result) const;
+    size_t prefix_search_aux(size_type s,
+                             const char_type *p,
+                             key_type *key,
+                             result_type *result) const;
     size_type create_transition(size_type s, char_type ch);
     size_type find_base(const char_type *inputs,
                         const extremum_type &extremum);
@@ -340,6 +345,7 @@ class double_trie: public trie_interface {
     ~double_trie();
     void insert(const key_type &key, const value_type &value);
     bool search(const key_type &key, value_type *value) const;
+    size_t prefix_search(const key_type &key, result_type *result) const;
     void build(const char *filename, bool verbose = false);
     const basic_trie *front_trie() const
     {
@@ -607,6 +613,7 @@ class single_trie: public trie_interface
     ~single_trie();
     void insert(const key_type &key, const value_type &value);
     bool search(const key_type &key, value_type *value) const;
+    size_t prefix_search(const key_type &key, result_type *result) const;
     void build(const char *filename, bool verbose);
 
     const basic_trie *trie()
@@ -619,7 +626,7 @@ class single_trie: public trie_interface
         return suffix_;
     }
 
-    void trace_suffix(size_type start, size_type count)
+    void trace_suffix(size_type start, size_type count) const
     {
         size_type i;
         for (i = start; i < header_->suffix_size && i < count; i++) {
