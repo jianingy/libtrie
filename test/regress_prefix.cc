@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 	trie_interface *trie = create_trie(argv[1][0] == '1'?SINGLE_TRIE:DOUBLE_TRIE);
 	size_t i;
 	const char prefix[] = "back!";
-	const char *dict[] = {"bachelor", "back", "badge", "badger", "badness", "bcs"};
+	const char *dict[] = {"bachelor", "back", "badge", "badger", "badness", "bcs", "backbone"};
 	key_type key;
 
 	for (i = 0; i < sizeof(dict) / sizeof(char *); i++) {

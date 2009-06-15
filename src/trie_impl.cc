@@ -599,6 +599,8 @@ double_trie::prefix_search(const key_type &key, result_type *result) const
     const char_type *p;
     size_type s = lhs_->go_forward(1, key.data(), &p);
     key_type store;
+    if (lhs_->check_reverse_transition(s, key_type::kTerminator))
+        s = lhs_->prev(s);
     if (p)
         store.assign(key.data(), p - key.data());
     else
@@ -629,13 +631,14 @@ double_trie::prefix_search(const key_type &key, result_type *result) const
             }
             it->first.push(ch);
         } while (r > 1);
-        if (fail || *miss != key_type::kTerminator) {
+        if (fail || (miss && *miss != key_type::kTerminator)) {
             --it;
             result->erase(it + 1);
             continue;
         }
         it->second = index_[i].data;
     }
+
     return result->size();
 }
 
@@ -871,6 +874,8 @@ single_trie::prefix_search(const key_type &key, result_type *result) const
     const char_type *p;
     size_type s = trie_->go_forward(1, key.data(), &p);
     key_type store;
+    if (trie_->check_reverse_transition(s, key_type::kTerminator))
+        s = trie_->prev(s);
     if (p)
         store.assign(key.data(), p - key.data());
     else
@@ -896,7 +901,7 @@ single_trie::prefix_search(const key_type &key, result_type *result) const
             }
             it->first.push(suffix_[start]);
         }
-        if (fail || *miss != key_type::kTerminator) {
+        if (fail || (miss && *miss != key_type::kTerminator)) {
             --it;
             result->erase(it + 1);
             continue;
