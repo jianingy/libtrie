@@ -31,6 +31,10 @@
 #include <set>
 #include <deque>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "trie.h"
 
 BEGIN_TRIE_NAMESPACE
