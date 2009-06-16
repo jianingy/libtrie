@@ -24,7 +24,7 @@ query_trie(const char *query, const char *index, bool prefix, bool verbose)
         mtrie->prefix_search(key, &result);
         result_type::const_iterator it;
         for (it = result.begin(); it != result.end(); it++)
-            std::cout << it->first.c_str() << " = " << it->second << std::endl;
+            std::cout << it->second << " " << it->first.c_str() << std::endl;
     } else {
         if (mtrie->search(key, &value)) {
             std::cout << value << std::endl;
@@ -79,11 +79,13 @@ int main(int argc, char *argv[])
     trie_type type = DOUBLE_TRIE;
     bool verbose = false;
     bool prefix = false;
+    bool dump = false;
 
     while (true) {
         static struct option long_options[] =
         {
             {"build", required_argument, 0, 'b'},
+            {"dump", no_argument, 0, 'd'},
             {"help", no_argument, 0, 'h'},
             {"prefix", no_argument, 0, 'p'},
             {"query", required_argument, 0, 'q'},
@@ -93,7 +95,7 @@ int main(int argc, char *argv[])
         };
         int option_index;
 
-        c = getopt_long(argc, argv, "b:hpq:t:v", long_options, &option_index);
+        c = getopt_long(argc, argv, "b:dhpq:t:v", long_options, &option_index);
         if (c == -1) break;
 
         switch (c) {
@@ -102,6 +104,9 @@ int main(int argc, char *argv[])
                 return 0;
             case 'b':
                 source = optarg;
+                break;
+            case 'd':
+                dump = true;
                 break;
             case 'p':
                 prefix = true;
@@ -134,6 +139,8 @@ int main(int argc, char *argv[])
             build_trie(source, index, type, verbose);
         else if (query)
             query_trie(query, index, prefix, verbose);
+        else if (dump)
+            query_trie("", index, true, verbose);
     }
     help_message();
 
