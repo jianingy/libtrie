@@ -250,7 +250,7 @@ class basic_trie
     const header_type *compact_header() const
     {
         memcpy(&compact_header_, header_, sizeof(header_type));
-        compact_header_.size = max_state_;
+        compact_header_.size = max_state_ + 1;
         return &compact_header_;
     }
 
