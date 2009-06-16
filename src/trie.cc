@@ -79,13 +79,15 @@ trie_interface *create_trie(const char *archive)
 void trie_interface::insert(const char *inputs, size_t length,
                             value_type value)
 {
-    insert(key_type(inputs, length), value);
+    key_type key(inputs, length);
+    insert(key, value);
 }
 
 bool trie_interface::search(const char *inputs, size_t length,
                             value_type *value) const
 {
-    return search(key_type(inputs, length), value);
+    key_type key(inputs, length);
+    return search(key, value);
 }
 
 void trie_interface::read_from_text(const char *source, bool verbose)
