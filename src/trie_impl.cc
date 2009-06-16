@@ -723,7 +723,7 @@ void double_trie::build(const char *filename, bool verbose)
 
 single_trie::single_trie(size_t size)
     :trie_(NULL), suffix_(NULL), header_(NULL), next_suffix_(1),
-     mmap_(NULL), mmap_size_(NULL)
+     mmap_(NULL), mmap_size_(0)
 {
     trie_ = new basic_trie(size);
     header_ = new header_type();
@@ -734,7 +734,7 @@ single_trie::single_trie(size_t size)
 
 single_trie::single_trie(const char *filename)
     :trie_(NULL), suffix_(NULL), header_(NULL), next_suffix_(1),
-     mmap_(NULL), mmap_size_(NULL)
+     mmap_(NULL), mmap_size_(0)
 {
     struct stat sb;
     int fd, retval;
