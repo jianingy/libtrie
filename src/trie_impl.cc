@@ -748,7 +748,10 @@ single_trie::single_trie(const char *filename)
 
 single_trie::~single_trie()
 {
-    if (!mmap_) {
+    if (mmap_) {
+        if (munmap(mmap_, mmap_size_) < 0)
+            throw std::runtime_error(strerror(errno));
+    } else {
         sanity_delete(header_);
         resize(suffix_, 0, 0);   // free suffix_
         resize(common_.data, 0, 0);  // free common_.data
