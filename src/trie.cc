@@ -134,11 +134,12 @@ void trie_interface::read_from_text(const char *source, bool verbose)
             }
         }
         if (verbose) {
+            std::cerr.precision(15);
             std::cerr << "..." << lineno << "." << std::endl
                       << "total insertion time = "
-                      << total.tv_sec * 1000 + total.tv_usec / 1000 << "ms "
+                      << total.tv_sec * 1000.0 + total.tv_usec / 1000.0 << "ms "
                       << ", average insertion time = "
-                      << (total.tv_sec * 1000000 + total.tv_usec) / lineno
+                      << (total.tv_sec * 1000000.0 + total.tv_usec) / lineno
                       << "us" << std::endl;
         }
         fclose(file);
