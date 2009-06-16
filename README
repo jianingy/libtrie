@@ -10,9 +10,11 @@ please refer [http://en.wikipedia.org/wiki/Trie Trie in Wikipedia].
 == Features
 
 - Very fast searching performance.
-- Index file can be mmap into memory. Which means it can be easily shared
+- Index file can be mmap into memory which means it can be easily shared
   with multiple process.
-- Supported Prefix Search.
+- Prefix search supported.
+- Key can be any binary data.
+- 32/64 bits compatible index file.
 
 == License
 
