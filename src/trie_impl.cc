@@ -606,8 +606,8 @@ double_trie::prefix_search(const key_type &key, result_type *result) const
     else
         store.assign(key.data(), key.length());
     lhs_->prefix_search_aux(s, p, &store, result);
-	result_type::iterator it;
-	for (it = result->begin(); it != result->end(); it++) {
+    result_type::iterator it;
+    for (it = result->begin(); it != result->end(); it++) {
         size_t i = -it->second;
         if (index_[i].index == 0) {
             it->second = index_[i].data; 
@@ -884,8 +884,8 @@ single_trie::prefix_search(const key_type &key, result_type *result) const
     else
         store.assign(key.data(), key.length());
     trie_->prefix_search_aux(s, p, &store, result);
-	result_type::iterator it;
-	for (it = result->begin(); it != result->end(); it++) {
+    result_type::iterator it;
+    for (it = result->begin(); it != result->end(); it++) {
         size_t start = -it->second;
         const char_type *miss = p;
         bool fail = false;
