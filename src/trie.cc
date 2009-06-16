@@ -26,6 +26,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
  */
+#include <sys/time.h>
 #include <stdint.h>
 #include <limits.h>
 
@@ -96,6 +97,8 @@ void trie_interface::read_from_text(const char *source, bool verbose)
         int val;
         size_t lineno = 0;
         key_type key;
+        struct timezone tz;
+        struct timeval total = {0, 0}, tv[2];
 
         if (verbose)
             std::cerr <<  "building";
@@ -116,11 +119,28 @@ void trie_interface::read_from_text(const char *source, bool verbose)
                 }
                 throw new bad_trie_source("format error");
             }
+            if (verbose)
+                gettimeofday(&tv[0], &tz);
             key.assign(cstr, strlen(cstr));
             insert(key, val);
+            if (verbose) {
+                gettimeofday(&tv[1], &tz);
+                total.tv_sec += tv[1].tv_sec - tv[0].tv_sec;
+                total.tv_usec += tv[1].tv_usec - tv[0].tv_usec;
+                while (total.tv_usec > 1000000) {
+                    total.tv_usec -= 1000000;
+                    total.tv_sec++;
+                }
+            }
         }
-        if (verbose)
-            std::cerr << "..." << lineno << "." << std::endl;
+        if (verbose) {
+            std::cerr << "..." << lineno << "." << std::endl
+                      << "total insertion time = "
+                      << total.tv_sec * 1000 + total.tv_usec / 1000 << "ms "
+                      << ", average insertion time = "
+                      << (total.tv_sec * 1000000 + total.tv_usec) / lineno
+                      << "us" << std::endl;
+        }
         fclose(file);
     } else {
         throw bad_trie_source("file error");
