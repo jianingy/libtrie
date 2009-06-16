@@ -950,7 +950,7 @@ void single_trie::build(const char *filename, bool verbose)
 
     if ((out = fopen(filename, "w+"))) {
         snprintf(header_->magic, sizeof(header_->magic), "%s", magic_);
-        header_->suffix_size = next_suffix_ - 1;
+        header_->suffix_size = next_suffix_;
         fwrite(header_, sizeof(header_type), 1, out);
         fwrite(suffix_, sizeof(suffix_type) * header_->suffix_size, 1, out);
         fwrite(trie_->compact_header(),
