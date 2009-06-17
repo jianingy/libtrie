@@ -53,6 +53,7 @@
 #include <vector>
 #include <cassert>
 #include <string>
+#include <queue>
 #include <map>
 #include <set>
 #include <deque>
@@ -136,6 +137,9 @@ class basic_trie
                              const char_type *p,
                              key_type *key,
                              result_type *result) const;
+    size_t find_ending(size_type s,
+                       key_type *store,
+                       result_type *result) const;
     size_type create_transition(size_type s, char_type ch);
     size_type find_base(const char_type *inputs,
                         const extremum_type &extremum);
@@ -168,13 +172,21 @@ class basic_trie
         states_[s].base = val;
         if (s > max_state_)
             max_state_ = s;
+        else if (val == 0 && s == max_state_)
+            --max_state_;
     }
 
     void set_check(size_type s, size_type val)
     {
         states_[s].check = val;
     }
-
+#ifdef FREE_BASE_TABLE
+    size_type append_free_base(size_type s, size_t level)
+    {
+        if (level > 3)
+            free_base_[s] = level;
+    }
+#endif
     // Get next state from s with input ch
     size_type next(size_type s, char_type ch) const
     {
@@ -337,6 +349,7 @@ class basic_trie
     bool owner_;
     trie_relocator_interface<size_type> *relocator_;
     mutable header_type compact_header_;
+    std::map<size_type, size_t> free_base_;
 };
 
 template<typename T>
@@ -387,6 +400,31 @@ class double_trie: public trie_interface {
         return rhs_;
     }
 
+    void check_accept()
+    {
+        result_type result;
+        key_type store;
+        rear_trie()->find_ending(1, &store, &result);
+        result_type::const_iterator it;
+        for (it = result.begin(); it != result.end(); it++) {
+            //std::cout << it->first.c_str() << " = " << it->second << std::endl;
+            /*
+            if (refer_.find(it->second) != refer_.end())
+                std::cout << it->second << " = " << refer_[it->second].referer.size() << std::endl;
+            else
+                std::cout << it->second << " = 0" << std::endl;
+            */
+            //if (refer_.find(it->second) == refer_.end() || refer_[it->second].referer.size() == 0)
+            //    std::cerr << it->second << " = 0" << std::endl;
+            if (refer_.find(it->second) == refer_.end() || refer_[it->second].referer.size() == 0) {
+                std::cerr << "deleting extra states" << std::endl;
+                if (!rhs_clean_one(it->second))
+                    rhs_clean_more(it->second, 0);
+            }
+                
+        }
+    }
+
     void trace_table(size_type istart,
                      size_type astart) const
     {
@@ -425,7 +463,7 @@ class double_trie: public trie_interface {
   protected:
     size_type rhs_append(const char_type *inputs);
     void lhs_insert(size_type s, const char_type *inputs, value_type value);
-    void rhs_clean_more(size_type t);
+    void rhs_clean_more(size_type t, size_t level);
     void rhs_insert(size_type s, size_type r,
                     const std::vector<char_type> &match,
                     const char_type *remain, char_type ch, size_type value);

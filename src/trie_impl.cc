@@ -134,11 +134,37 @@ basic_trie::~basic_trie()
 size_type
 basic_trie::find_base(const char_type *inputs, const extremum_type &extremum)
 {
-    bool found;
+    bool found = false;
     size_type i;
     const char_type *p;
-
-    for (i = last_base_, found = false; !found; /* empty */) {
+    size_t size = 0;
+    
+    std::map<size_type, size_t>::iterator it;
+    
+    for (p = inputs; *p; p++)
+        ++size;
+#ifdef FREE_BASE_TABLE
+    for (it = free_base_.begin(); it != free_base_.end(); it++) {
+//        if (size > it->second)
+//            continue;
+        i = it->first;
+        if (i + extremum.max >= header_->size)
+            continue;
+        if (check(i + extremum.min) <= 0 && check(i + extremum.max) <= 0) {
+            for (p = inputs, found = true; *p; p++) {
+                if (check(i + *p) > 0) {
+                    found = false;
+                    break;
+                }
+            }
+        }
+        if (found == true) {
+            free_base_.erase(it);
+            return i;
+        }
+    }
+#endif    
+    for (i = last_base_; !found; /* empty */) {
         i++;
         if (i + extremum.max >= header_->size)
             resize_state(extremum.max);
@@ -150,13 +176,13 @@ basic_trie::find_base(const char_type *inputs, const extremum_type &extremum)
                 }
             }
         } else {
-            //  i += extremum.min;
+          // i += extremum.min;
         }
     }
 
-    last_base_ = i;
+    last_base_ = (i > 256)?i-255:i;
 
-    return last_base_;
+    return i;
 }
 
 size_type
@@ -167,6 +193,7 @@ basic_trie::relocate(size_type stand,
 {
     size_type obase, nbase, i;
     char_type targets[key_type::kCharsetSize + 1];
+    size_t num_freed = 0;
 
     obase = base(s);  // save old base value
     nbase = find_base(inputs, extremum);  // find a new base
@@ -188,11 +215,14 @@ basic_trie::relocate(size_type stand,
         // free old places
         set_base(obase + inputs[i], 0);
         set_check(obase + inputs[i], 0);
+        ++num_freed;
         // create new links according old ones
     }
     // finally, set new base
     set_base(s, nbase);
-
+#ifdef FREE_BASE_TABLE
+    append_free_base(obase, num_freed);
+#endif
     return stand;
 }
 
@@ -268,6 +298,27 @@ basic_trie::prefix_search(const key_type &key, result_type *result) const
     key_type store(key);
     prefix_search_aux(s, p, &store, result);
     return result->size();
+}
+
+size_t basic_trie::find_ending(size_type s,
+                               key_type *store,
+                               result_type *result) const
+{
+    char_type targets[key_type::kCharsetSize + 1];
+
+    if (find_exist_target(s, targets, NULL)) {
+        for (char_type *p = targets; *p; p++) {
+            size_type t = next(s, *p);
+            if (*p != key_type::kTerminator)
+                store->push(*p);
+            find_ending(t, store, result);
+            if (*p != key_type::kTerminator)
+                store->pop();
+        }
+    } else {
+        result->push_back(std::pair<key_type, value_type>(*store, s));
+    }
+    return 0;
 }
 
 size_t basic_trie::prefix_search_aux(size_type s,
@@ -477,14 +528,14 @@ double_trie::lhs_insert(size_type s, const char_type *inputs, value_type value)
     index_[i].data = value;
 }
 
-void double_trie::rhs_clean_more(size_type t)
+void double_trie::rhs_clean_more(size_type t, size_t level)
 {
     assert(t > 0);
     if (outdegree(t) == 0 && count_referer(t) == 0) {
         size_type s = rhs_->prev(t);
         remove_accept_state(t);
         if (s > 0)
-            rhs_clean_more(s);
+            rhs_clean_more(s, level + 1);
     } else if (outdegree(t) == 1) {
         size_type r = rhs_->next(t, key_type::kTerminator);
         if (rhs_->check_transition(t, r)) {
@@ -499,6 +550,9 @@ void double_trie::rhs_clean_more(size_type t)
                 accept_[refer_[t].accept_index].accept = t;
             }
             remove_accept_state(r);
+#ifdef FREE_BASE_TABLE
+            rhs_->append_free_base(rhs_->base(r), level);
+#endif
         }
     }
 }
@@ -554,7 +608,7 @@ void double_trie::rhs_insert(size_type s, size_type r,
     // R-4
     if (u > 0) {
         if (!rhs_clean_one(u))
-            rhs_clean_more(u);
+            rhs_clean_more(u, 0);
     }
 }
 

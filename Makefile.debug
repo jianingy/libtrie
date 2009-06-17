@@ -1,7 +1,10 @@
 CXX=g++
-CFLAGS=-g -Wall -I./include -I./src
+CFLAGS=-O3 -Wall -I./include -I./src
 
-all: test/regress_case test/regress_file test/regress_prefix
+#all: test/regress_case test/regress_file test/regress_prefix
+all: test/sample test/regress_file
+test/sample: src/trie.cc src/trie_impl.cc test/sample.cc
+	$(CXX) $(CFLAGS) -o $@ $^
 
 test/regress_prefix: src/trie.cc src/trie_impl.cc test/regress_prefix.cc
 	$(CXX) $(CFLAGS) -o $@ $^

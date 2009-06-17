@@ -5,6 +5,7 @@
 #include <cstring>
 #include <cstdlib>
 #include "trie.h"
+#include "trie_impl.h"
 
 using namespace trie;
 
@@ -85,6 +86,8 @@ int main(int argc, char *argv[])
             << (double)(total.tv_sec * 1000000.0 + total.tv_usec) / j
             << "us" << std::endl;
     }
+
+    static_cast<double_trie *>(trie)->check_accept();
 
     delete trie;
 

@@ -145,6 +145,8 @@ void trie_interface::read_from_text(const char *source, bool verbose)
                       << "us" << std::endl;
         }
         fclose(file);
+        static_cast<double_trie *>(this)->check_accept();
+
     } else {
         throw bad_trie_source("file error");
     }
