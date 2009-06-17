@@ -459,9 +459,11 @@ class double_trie: public trie_interface {
             i = find_index_entry(s);
             size_type acc = find_accept_entry(i);
             accept_[acc].accept = t;
+            assert(acc > 0 && acc < header_->accept_size);
             refer_[t].accept_index = acc;
         }
         assert(lhs_->base(s) < 0);
+        assert(refer_.find(t) != refer_.end());
         refer_[t].referer.insert(s);
 
         return i;
@@ -581,12 +583,13 @@ class double_trie: public trie_interface {
     {
         if (refer_.find(s) != refer_.end()) {
             // XXX: check what cause the inequivalent
-            if (s > 0
-                && count_referer(s) == 0
-                && refer_[s].accept_index < header_->accept_size
-                && refer_[s].accept_index > 0) {
-                accept_[refer_[s].accept_index].accept = 0;
-                free_accept_.push_back(refer_[s].accept_index);
+            if (s > 0 && count_referer(s) == 0) {
+                if (refer_[s].accept_index < header_->accept_size) {
+                    if (refer_[s].accept_index > 0) {
+                        accept_[refer_[s].accept_index].accept = 0;
+                        free_accept_.push_back(refer_[s].accept_index);
+                    }
+                }
             }
             refer_.erase(s);
         }

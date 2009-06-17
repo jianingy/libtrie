@@ -448,12 +448,14 @@ double_trie::rhs_append(const char_type *inputs)
     if (outdegree(s) == 0) {
         t = rhs_->create_transition(s, key_type::kTerminator);
         std::set<size_type>::const_iterator it;
-        for (it = refer_[s].referer.begin();
-                it != refer_[s].referer.end();
-                it++) {
-            set_link(*it, t);
+        if (refer_.find(s) != refer_.end()) {
+            for (it = refer_[s].referer.begin();
+                    it != refer_[s].referer.end();
+                    it++) {
+                set_link(*it, t);
+            }
+            free_accept_entry(s);
         }
-        free_accept_entry(s);
     }
     do {
         s = rhs_->create_transition(s, *p);
@@ -487,12 +489,15 @@ void double_trie::rhs_clean_more(size_type t)
         size_type r = rhs_->next(t, key_type::kTerminator);
         if (rhs_->check_transition(t, r)) {
             // delete transition 't -#-> r'
-            std::set<size_type>::const_iterator it;
-            for (it = refer_[r].referer.begin();
-                    it != refer_[r].referer.end();
-                    it++)
-                set_link(*it, t);
-            accept_[refer_[t].accept_index].accept = t;
+            if (refer_.find(r) != refer_.end()) {
+                std::set<size_type>::const_iterator it;
+                for (it = refer_[r].referer.begin();
+                        it != refer_[r].referer.end();
+                        it++)
+                    set_link(*it, t);
+                assert (refer_.find(t) != refer_.end());
+                accept_[refer_[t].accept_index].accept = t;
+            }
             remove_accept_state(r);
         }
     }
@@ -512,7 +517,7 @@ void double_trie::rhs_insert(size_type s, size_type r,
     // XXX: check out the crash reason if base(s) is not set to zero.
     lhs_->set_base(s, 0);
     stand_ = r;
-    if (u > 0) {
+    if (u > 0 && refer_.find(u) != refer_.end()) {
         refer_[u].referer.erase(s);
 
         if (refer_[u].referer.size() == 0)
