@@ -156,7 +156,7 @@ basic_trie::find_base(const char_type *inputs, const extremum_type &extremum)
 
     last_base_ = (i > 256)?i - 255:i;
 
-    return last_base_;
+    return i;
 }
 
 size_type
