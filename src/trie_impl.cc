@@ -538,7 +538,7 @@ void double_trie::rhs_clean_more(size_type t, size_t level)
         size_type s = rhs_->prev(t);
         remove_accept_state(t);
         assert(s > 0);
-        rhs_clean_more(s);
+        rhs_clean_more(s, level + 1);
     } else if (outdegree(t) == 1) {
         size_type r = rhs_->next(t, key_type::kTerminator);
         if (rhs_->check_transition(t, r)) {
@@ -616,7 +616,7 @@ void double_trie::rhs_insert(size_type s, size_type r,
     // R-4
     u = stand_[0];
     if (!rhs_clean_one(u))
-        rhs_clean_more(u);
+        rhs_clean_more(u, 0);
 }
 
 void double_trie::insert(const key_type &key, const value_type &value)
