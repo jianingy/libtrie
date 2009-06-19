@@ -509,15 +509,16 @@ void double_trie::rhs_insert(size_type s, size_type r,
                              char_type ch, size_type value)
 {
     // R-1
-    size_type u = link_state(s);  // u might be zero
+    size_type u = link_state(s);
+    assert(u > 0);
     value_type oval = index_[-lhs_->base(s)].data;
     index_[-lhs_->base(s)].index = 0;
     index_[-lhs_->base(s)].data = 0;
     free_index_.push_back(-lhs_->base(s));
-    // XXX: check out the crash reason if base(s) is not set to zero.
+    // s is separator which implies base(s) < 0, so we need to set base(s) = 0
     lhs_->set_base(s, 0);
     stand_ = r;
-    if (u > 0 && refer_.find(u) != refer_.end()) {
+    if (refer_.find(u) != refer_.end()) {
         refer_[u].referer.erase(s);
 
         if (refer_[u].referer.size() == 0)
@@ -552,10 +553,8 @@ void double_trie::rhs_insert(size_type s, size_type r,
     index_[i].data = oval;
 
     // R-4
-    if (u > 0) {
-        if (!rhs_clean_one(u))
-            rhs_clean_more(u);
-    }
+    if (!rhs_clean_one(u))
+        rhs_clean_more(u);
 }
 
 void double_trie::insert(const key_type &key, const value_type &value)
