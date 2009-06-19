@@ -540,6 +540,7 @@ class double_trie: public trie_interface {
 
     bool rhs_clean_one(size_type t)
     {
+        assert(rhs_->check(t) > 0);
         size_type s = rhs_->prev(t);
         if (s > 0
             && t == rhs_->next(s, key_type::kTerminator)
@@ -574,8 +575,12 @@ class double_trie: public trie_interface {
             accept_[refer_[s].accept_index].accept = t;
             refer_[t] = refer_[s];
             free_accept_entry(s);
-        } else if (stand_ == s) {
-            stand_ = t;
+        } 
+        if (watcher_[0] == s) {
+            watcher_[0] = t;
+        } 
+        if (watcher_[1] == s) {
+            watcher_[1] = t;
         }
     }
 
@@ -616,7 +621,7 @@ class double_trie: public trie_interface {
     std::vector<char_type> exists_;
     size_type next_accept_, next_index_;
     trie_relocator<double_trie> *front_relocator_, *rear_relocator_;
-    size_type stand_;
+    size_type watcher_[2];
     std::deque<size_type> free_accept_;
     std::deque<size_type> free_index_;
     void *mmap_;
