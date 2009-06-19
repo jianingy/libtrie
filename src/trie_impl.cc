@@ -29,6 +29,7 @@
 #include <iostream>
 #include <cstdio>
 
+#define FREE_BASE_TABLE
 #include "trie_impl.h"
 
 #define sanity_delete(X)  do { \
@@ -145,8 +146,8 @@ basic_trie::find_base(const char_type *inputs, const extremum_type &extremum)
         ++size;
 #ifdef FREE_BASE_TABLE
     for (it = free_base_.begin(); it != free_base_.end(); it++) {
-//        if (size > it->second)
-//            continue;
+        if (size > it->second)
+            continue;
         i = it->first;
         if (i + extremum.max >= header_->size)
             continue;
@@ -159,12 +160,12 @@ basic_trie::find_base(const char_type *inputs, const extremum_type &extremum)
             }
         }
         if (found == true) {
-            free_base_.erase(it);
             return i;
         }
     }
 #endif    
-    for (i = last_base_; !found; /* empty */) {
+//    std::cerr << "remian size = " << free_base_.size() << std::endl;
+    for (i = 1/*last_base_*/; !found; /* empty */) {
         i++;
         if (i + extremum.max >= header_->size)
             resize_state(extremum.max);

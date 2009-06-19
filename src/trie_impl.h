@@ -174,6 +174,12 @@ class basic_trie
             max_state_ = s;
         else if (val == 0 && s == max_state_)
             --max_state_;
+#ifdef FREE_BASE_TABLE
+        std::map<size_type, size_t>::iterator it;
+        it = free_base_.find(val);
+        if (it != free_base_.end())
+            free_base_.erase(it);
+#endif
     }
 
     void set_check(size_type s, size_type val)
@@ -183,7 +189,7 @@ class basic_trie
 #ifdef FREE_BASE_TABLE
     size_type append_free_base(size_type s, size_t level)
     {
-        if (level > 3)
+        if (level > 0 && s > 0 && base(s) > 0 && s < header_->size)
             free_base_[s] = level;
     }
 #endif
