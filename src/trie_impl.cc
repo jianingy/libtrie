@@ -358,8 +358,8 @@ double_trie::double_trie(size_t size)
     index_ = resize(index_, 0, header_->index_size);
     header_->accept_size = size?size:basic_trie::kDefaultStateSize;
     accept_ = resize(accept_, 0, header_->accept_size);
-    stand_[0] = 0;
-    stand_[1] = 0;
+    watcher_[0] = 0;
+    watcher_[1] = 0;
 }
 
 double_trie::double_trie(const char *filename)
@@ -520,8 +520,8 @@ void double_trie::rhs_insert(size_type s, size_type r,
     free_index_.push_back(-lhs_->base(s));
     // s is separator which implies base(s) < 0, so we need to set base(s) = 0
     lhs_->set_base(s, 0);
-    stand_[0] = u;
-    stand_[1] = r;
+    watcher_[0] = u; // u & r may be changed during rhs_->create_transition
+    watcher_[1] = r; // we use watcher_ to monitor there changing.
     if (refer_.find(u) != refer_.end()) {
         refer_[u].referer.erase(s);
 
@@ -543,14 +543,14 @@ void double_trie::rhs_insert(size_type s, size_type r,
         index_[-lhs_->base(t)].index = 0;
     } else {
         size_type a = rhs_append(remain + 1);
-        assert(rhs_->check(stand_[0]) > 0);
+        assert(rhs_->check(watcher_[0]) > 0);
         i = set_link(t, a);
         index_[i].data = value;
     }
 
     // R-3
     t = lhs_->create_transition(s, ch);
-    size_type v = rhs_->prev(stand_[1]);  // v -ch-> r
+    size_type v = rhs_->prev(watcher_[1]);  // v -ch-> r
     if (!rhs_->check_transition(v, rhs_->next(v, key_type::kTerminator)))
         r = rhs_->create_transition(v, key_type::kTerminator);
     else
@@ -559,7 +559,7 @@ void double_trie::rhs_insert(size_type s, size_type r,
     index_[i].data = oval;
 
     // R-4
-    u = stand_[0];
+    u = watcher_[0];
     if (!rhs_clean_one(u))
         rhs_clean_more(u);
 }

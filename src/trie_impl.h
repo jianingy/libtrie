@@ -576,11 +576,11 @@ class double_trie: public trie_interface {
             refer_[t] = refer_[s];
             free_accept_entry(s);
         } 
-        if (stand_[0] == s) {
-            stand_[0] = t;
+        if (watcher_[0] == s) {
+            watcher_[0] = t;
         } 
-        if (stand_[1] == s) {
-            stand_[1] = t;
+        if (watcher_[1] == s) {
+            watcher_[1] = t;
         }
     }
 
@@ -621,7 +621,7 @@ class double_trie: public trie_interface {
     std::vector<char_type> exists_;
     size_type next_accept_, next_index_;
     trie_relocator<double_trie> *front_relocator_, *rear_relocator_;
-    size_type stand_[2];
+    size_type watcher_[2];
     std::deque<size_type> free_accept_;
     std::deque<size_type> free_index_;
     void *mmap_;
