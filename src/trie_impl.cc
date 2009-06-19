@@ -341,7 +341,7 @@ void basic_trie::trace(size_type s) const
 double_trie::double_trie(size_t size)
     :header_(NULL), lhs_(NULL), rhs_(NULL), index_(NULL), accept_(NULL),
      next_accept_(1), next_index_(1), front_relocator_(NULL),
-     rear_relocator_(NULL), stand_(0), mmap_(NULL), mmap_size_(0)
+     rear_relocator_(NULL), mmap_(NULL), mmap_size_(0)
 {
     header_ = new header_type();
     memset(header_, 0, sizeof(header_type));
@@ -358,12 +358,14 @@ double_trie::double_trie(size_t size)
     index_ = resize(index_, 0, header_->index_size);
     header_->accept_size = size?size:basic_trie::kDefaultStateSize;
     accept_ = resize(accept_, 0, header_->accept_size);
+    stand_[0] = 0;
+    stand_[1] = 0;
 }
 
 double_trie::double_trie(const char *filename)
     :header_(NULL), lhs_(NULL), rhs_(NULL), index_(NULL), accept_(NULL),
      next_accept_(1), next_index_(1), front_relocator_(NULL),
-     rear_relocator_(NULL), stand_(0), mmap_(NULL), mmap_size_(0)
+     rear_relocator_(NULL), mmap_(NULL), mmap_size_(0)
 {
     struct stat sb;
     int fd, retval;
@@ -479,12 +481,12 @@ double_trie::lhs_insert(size_type s, const char_type *inputs, value_type value)
 
 void double_trie::rhs_clean_more(size_type t)
 {
-    assert(t > 0);
     if (outdegree(t) == 0 && count_referer(t) == 0) {
+        assert(rhs_->check(t) > 0);
         size_type s = rhs_->prev(t);
         remove_accept_state(t);
-        if (s > 0)
-            rhs_clean_more(s);
+        assert(s > 0);
+        rhs_clean_more(s);
     } else if (outdegree(t) == 1) {
         size_type r = rhs_->next(t, key_type::kTerminator);
         if (rhs_->check_transition(t, r)) {
@@ -511,13 +513,15 @@ void double_trie::rhs_insert(size_type s, size_type r,
     // R-1
     size_type u = link_state(s);
     assert(u > 0);
+    assert(rhs_->check(u) > 0);
     value_type oval = index_[-lhs_->base(s)].data;
     index_[-lhs_->base(s)].index = 0;
     index_[-lhs_->base(s)].data = 0;
     free_index_.push_back(-lhs_->base(s));
     // s is separator which implies base(s) < 0, so we need to set base(s) = 0
     lhs_->set_base(s, 0);
-    stand_ = r;
+    stand_[0] = u;
+    stand_[1] = r;
     if (refer_.find(u) != refer_.end()) {
         refer_[u].referer.erase(s);
 
@@ -538,13 +542,15 @@ void double_trie::rhs_insert(size_type s, size_type r,
         index_[-lhs_->base(t)].data = value;
         index_[-lhs_->base(t)].index = 0;
     } else {
-        i = set_link(t, rhs_append(remain + 1));
+        size_type a = rhs_append(remain + 1);
+        assert(rhs_->check(stand_[0]) > 0);
+        i = set_link(t, a);
         index_[i].data = value;
     }
 
     // R-3
     t = lhs_->create_transition(s, ch);
-    size_type v = rhs_->prev(stand_);  // v -ch-> r
+    size_type v = rhs_->prev(stand_[1]);  // v -ch-> r
     if (!rhs_->check_transition(v, rhs_->next(v, key_type::kTerminator)))
         r = rhs_->create_transition(v, key_type::kTerminator);
     else
@@ -553,6 +559,7 @@ void double_trie::rhs_insert(size_type s, size_type r,
     index_[i].data = oval;
 
     // R-4
+    u = stand_[0];
     if (!rhs_clean_one(u))
         rhs_clean_more(u);
 }
