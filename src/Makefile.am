@@ -1,4 +1,4 @@
-AM_CPPFLAGS=-I$(srcdir)/../include
+AM_CPPFLAGS=-I$(srcdir)/../include -DNDEBUG
 lib_LTLIBRARIES=libtrie.la
 libtrie_la_SOURCES=trie_impl.h trie_impl.cc $(srcdir)/../include/trie.h trie.cc
 bin_PROGRAMS = trietool
