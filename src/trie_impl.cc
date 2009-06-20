@@ -500,6 +500,8 @@ void double_trie::rhs_clean_more(size_type t)
                 assert (refer_.find(t) != refer_.end());
                 accept_[refer_[t].accept_index].accept = t;
             }
+            if (rhs_->base(r) > 1)
+                rhs_->set_last_base(rhs_->base(r));
             remove_accept_state(r);
         }
     }

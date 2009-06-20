@@ -148,6 +148,11 @@ class basic_trie
         return new basic_trie(header, states);
     }
 
+    void set_last_base(size_type base)
+    {
+        last_base_ = base;
+    }
+
     void set_relocator(trie_relocator_interface<size_type> *relocator)
     {
         relocator_ = relocator;
