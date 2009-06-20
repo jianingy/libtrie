@@ -6,10 +6,8 @@
 .libs
 Makefile
 Makefile.in
-/AUTHORS
 /COPYING
 /ChangeLog
-/INSTALL
 /NEWS
 /aclocal.m4
 /autom4te.cache/
