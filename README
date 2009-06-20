@@ -1,42 +1,27 @@
-= An implementation of Two-Trie and Tail-Trie
+= libtrie -- An implementation of Double-Array Trie
+[http://blog.jianingy.com/ Jianing Yang] ([jianingy.yang@gamil.com])
 
 This is an implementation of Two-Trie and Tail-Trie using J.Aoe's Double-
-Array Structure. Trie is an associative container where the keys are strings.
-It is very fast in searching keys. The searching performance is O(m) where m
-is the length of the key. This also means that the number of items in trie
-has no effect with its searching performance. For more information about trie
-please refer [http://en.wikipedia.org/wiki/Trie Trie in Wikipedia].
+Array Structure. Trie is an associative container whose keys are strings.
+It has very fast searching performance. The time complexity of searching 
+is O(1) respected to the number of items in trie. This also means that 
+the number of items in trie has no effect with its searching performance. 
+Therefor trie is widely used as dictionary for Natural Language Processing 
+and Network Information Retrieving. For more information about trie please 
+refer to [http://en.wikipedia.org/wiki/Trie Trie in Wikipedia].
 
 == Features
 
-- Very fast searching performance.
-- Index file can be mmap into memory which means it can be easily shared
-  with multiple process.
-- Prefix search supported.
-- Key can be any binary data.
-- 32/64 bits compatible index file.
+- Extremely fast searching performance -- O(1) resepected to items in trie.
+- Persistent stored as index file on disk.
+- The index file can be mmap(2) into memory which means it can be easily 
+  shared among multiple processes.
+- Prefix search is supported.
+- Any binary data can be used as key.
+- 32/64 bits compatible index file. Once index built, it can be used in
+  both 32 and 64 bits system without any modification.
+- Both Tail-Trie and Two-Trie are supported
 
 == License
 
-This project is under BSD License
-
-== Authors
-
-Jianing Yang (jianingy.yang at gmail dot com)
-
-== Download
-
-You can download this project in either [http://github.com/jianingy/libtrie/zipball/master zip] or [http://github.com/jianingy/libtrie/tarball/master tar] formats.
-
-You can also clone the project with [http://git-scm.com/ Git] by running
-
-~~~
-$ git clone git://github.com/jianingy/libtrie
-~~~
-
-
-== References
-
-. J. Aoe, "An Efficient Digital Search Algorithm by Using a Double-Array Structure", IEEE Trans. Software Eng., vol. 15, no. 9, pp. 1,066-1,077, 1989.
-. J. Aoe, K. Morimoto, and T. Sato, "An Efficient Implementation of Trie Structure", Software Practices and Experiences vol. 22, no. 9, pp. 695-721, 1992.
-. J. Aoe, K. Morimoto, M. Shishibori, and K. Park, "A Trie Compaction Algorithm for a Large Set of Keys", IEEE Trans. Knowledge and Data Eng., vol. 8, no. 3, pp 476-491, 1996
+This project is under BSD License. Feel free to use it.
