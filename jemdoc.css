@@ -10,8 +10,7 @@ body {
 	background: white;
 	font-family: Georgia, serif;
 	padding-bottom: 8px;
-	width: 768px;
-	margin: 56px auto;
+	margin: 0;
 }
 
 #layout-menu {
@@ -40,6 +39,7 @@ body {
     background: white;
     text-align: left;
     vertical-align: top;
+	width: 76ex;
 }
 
 #layout-menu a {

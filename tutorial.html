@@ -1,0 +1,91 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta name="generator" content="jemdoc, see http://jemdoc.jaboc.net/" />
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link rel="stylesheet" href="jemdoc.css" type="text/css" />
+<title>libtrie &ndash; tutorial</title>
+</head>
+<body>
+<table summary="Table for page layout." id="tlayout">
+<tr valign="top">
+<td id="layout-menu">
+<div class="menu-category">libtrie</div>
+<div class="menu-item"><a href="index.html">home</a></div>
+<div class="menu-item"><a href="download.html">download</a></div>
+<div class="menu-item"><a href="version.html">version</a></div>
+<div class="menu-item"><a href="contact.html">contact</a></div>
+<div class="menu-category">user&rsquo;s guide</div>
+<div class="menu-item"><a href="install.html">installation</a></div>
+<div class="menu-item"><a href="tutorial.html" class="current">tutorial</a></div>
+<div class="menu-item"><a href="example.html">code&nbsp;exmaple</a></div>
+<div class="menu-item"><a href="faq.html">faq</a></div>
+<div class="menu-category">references</div>
+<div class="menu-item"><a href="papers.html">papers</a></div>
+</td>
+<td id="layout-content">
+<div id="toptitle">
+<h1>libtrie &ndash; tutorial</h1>
+</div>
+<p>This tutorial will show you how to use libtrie to store and retrieve information step by step.</p>
+<h2>Include header file</h2>
+<p>To use libtrie in your C<tt></tt> program, you need include its header file. </p>
+<div class="codeblock">
+<div class="blockcontent"><pre>
+#include "trie.h"
+</pre></div></div>
+<h2>Create A Trie</h2>
+<p>You can choose to create either a tail-trie or a two-trie. The difference between
+this two types of trie are shown in <a href="faq.html">libtrie&rsquo;s faq</a></p>
+<p>To create a trie use the following statements</p>
+<div class="codeblock">
+<div class="blockcontent"><pre>
+/* create a tail-trie */
+trie::trie_interface *tailtrie = trie::create_trie(trie::SINGLE_TRIE);
+
+/* create a two-trie */
+trie::trie_interface *twotrie = trie::create_trie(trie::DOUBLE_TRIE);
+</pre></div></div>
+<h2>Insertion</h2>
+<p>First, create a key for your data as below. Notice that the first argument of key_type&rsquo;s
+constructor is a pointer to the data which you wanna let it be the key and the second one 
+is the length of the data.</p>
+<div class="codeblock">
+<div class="blockcontent"><pre>
+trie::key_type key("MyKey", 5);
+</pre></div></div>
+<p>Once a key is ready, you can use it to store a <i>trie::value_type</i> value which is a 32bits
+integer currently(I&rsquo;ll make it support more data types in future).</p>
+<div class="codeblock">
+<div class="blockcontent"><pre>
+trie::value_type value = 5678;
+twotrie-&gt;insert(key, 1234);
+tailtrie-&gt;insert(key, value);
+</pre></div></div>
+<h2>Searching</h2>
+<p>To search a trie you also need a <i>trie::key_type</i> key described in the insertion section.
+The returned value will be stored by a given pointer. Let&rsquo;s see it.</p>
+<div class="codeblock">
+<div class="blockcontent"><pre>
+trie::value_type value;
+trie::key_type key("MyKey", 5);
+twotrie-&gt;search(key, &amp;value);
+printf("value = %d\n", value);
+</pre></div></div>
+<p>In addition, this key can be reused by its <i>assign</i> method like,</p>
+<div class="codeblock">
+<div class="blockcontent"><pre>
+key.assign("HisKey", 6);
+tailtrie-&gt;search(key, &amp;value);
+</pre></div></div>
+<div id="footer">
+<div id="footer-text">
+Page generated 2009-06-20 10:44:46 CST, by <a href="http://jemdoc.jaboc.net/">jemdoc</a>.
+</div>
+</div>
+</td>
+</tr>
+</table>
+</body>
+</html>
