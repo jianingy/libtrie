@@ -1,0 +1,36 @@
+# jemdoc: menu{MENU}{install.html}
+= libtrie -- installation guide
+
+== Install from Git source
+
+If you are installing libtrie from its git source, you need to
+have autotools installed in your system including autoconf, automake
+and libtool. 
+
+First, use autogen.sh configure autotools as below
+~~~
+{}{bash}
+./autogen.sh
+~~~
+
+Then, you can install libtrie with familiar GNU installation steps
+~~~
+{}{bash}
+./configure --prefix ~/usr
+make
+sudo make install
+~~~
+
+== Install from source tarball
+
+If you are installing from libtrie's source tarball, just extract
+it and apply normal GNU installation steps as the following example
+shows
+~~~
+{}{bash}
+tar jxvf libtrie-0.1.0.tar.bz2
+cd libtrie-0.1.0
+./configure --prefix ~/usr
+make
+sudo make install
+~~~

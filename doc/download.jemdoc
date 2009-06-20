@@ -1,0 +1,14 @@
+# jemdoc: menu{MENU}{download.html}
+= libtrie -- download
+
+== Git Source
+
+You can download the Git source in either [http://github.com/jianingy/libtrie/zipball/master zip] or [http://github.com/jianingy/libtrie/tarball/master tar] formats.
+
+You can also clone the project with [http://git-scm.com/ Git] by running
+~~~
+{}{bash}
+$ git clone git://github.com/jianingy/libtrie
+~~~
+
+== Source Tarball

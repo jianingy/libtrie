@@ -1,0 +1,29 @@
+# jemdoc: menu{MENU}{index.html}
+= libtrie -- An implementation of Double-Array Trie
+[http://blog.jianingy.com/ Jianing Yang] ([jianingy.yang@gamil.com])
+
+This is an implementation of Two-Trie and Tail-Trie using J.Aoe's Double-
+Array Structure. Trie is an associative container whose keys are strings.
+It has very fast searching performance. The time complexity of searching 
+is O(1) respected to the number of items in trie. This also means that 
+the number of items in trie has no effect with its searching performance. 
+Therefor trie is widely used as dictionary for Natural Language Processing 
+and Network Information Retrieving. For more information about trie please 
+refer to [http://en.wikipedia.org/wiki/Trie Trie in Wikipedia].
+
+== Features
+
+- Extremely fast searching performance -- O(1) resepected to items in trie.
+- Persistent stored as index file on disk.
+- The index file can be mmap(2) into memory which means it can be easily 
+  shared among multiple processes.
+- Prefix search is supported.
+- Any binary data can be used as key.
+- 32/64 bits compatible index file. Once index built, it can be used in
+  both 32 and 64 bits system without any modification.
+- Both Tail-Trie and Two-Trie are supported
+
+== License
+
+This project is under BSD License. Feel free to use it.
+
