@@ -71,7 +71,7 @@ BEGIN_TRIE_NAMESPACE
  * A trie state relocator will be called when a state is being moved
  * by relocate method of basic_trie during create_transition.
  *
- * @param T Trie type
+ * @param T Type of state index
  */
 template<typename T> class trie_relocator_interface {
   public:
@@ -142,8 +142,8 @@ class basic_trie
 
     /// Represents a state
     typedef struct {
-        size_type base;  ///< The BASE value in J.Aoe's paper
-        size_type check; ///< The CHECK value in J.Aoe's paper
+        size_type base;  ///< The BASE value according to J.Aoe's paper
+        size_type check; ///< The CHECK value according to J.Aoe's paper
     } state_type;
 
     /**
@@ -292,19 +292,19 @@ class basic_trie
         relocator_ = relocator;
     }
 
-    /// Get BASE value of state s
+    /// Get the BASE value of state s.
     size_type base(size_type s) const
     {
         return states_[s].base;
     }
 
-    /// Get CHECK value of state s
+    /// Get the CHECK value of state s.
     size_type check(size_type s) const
     {
         return states_[s].check;
     }
 
-    /// Set a new BASE value of state s
+    /// Set a new BASE value of state s.
     void set_base(size_type s, size_type val)
     {
         states_[s].base = val;
@@ -312,19 +312,19 @@ class basic_trie
             max_state_ = s;
     }
 
-    /// Set a new CHECK value of state s
+    /// Set a new CHECK value of state s.
     void set_check(size_type s, size_type val)
     {
         states_[s].check = val;
     }
 
-    /// Gets next state from s with input ch
+    /// Gets next state from s with input ch.
     size_type next(size_type s, char_type ch) const
     {
         return base(s) + ch;
     }
 
-    /// Get previous state from s with input ch
+    /// Get previous state from s with input ch.
     size_type prev(size_type s) const
     {
         return check(s);
@@ -400,7 +400,7 @@ class basic_trie
 
     /**
      * Returns a pointer to a basic_trie header whose size is
-     * exactly the number of used items in state buffer
+     * exactly the number of used items in state buffer.
      */
     const header_type *compact_header() const
     {
@@ -409,31 +409,31 @@ class basic_trie
         return &compact_header_;
     }
 
-    /// Returns a pointer to header
+    /// Returns a pointer to header.
     const header_type *header() const
     {
         return header_;
     }
 
-    /// Returns a pointer to state buffer
+    /// Returns a pointer to state buffer.
     const state_type *states() const
     {
         return states_;
     }
 
-    /// Returns the number of elements used in state buffer
+    /// Returns the number of elements used in state buffer.
     size_type max_state() const
     {
         return max_state_;
     }
 
-    /// Returns true if a basic_trie owns the memory of its data
+    /// Returns true if a basic_trie owns the memory of its data.
     bool owner() const
     {
         return owner_;
     }
 
-    /// Returns true if there is a transition from s to t
+    /// Returns true if there is a transition from s to t.
     bool check_transition(size_type s, size_type t) const
     {
         return (s > 0
@@ -441,7 +441,7 @@ class basic_trie
                 && t < header_->size && check(t) == s)?true:false;
     }
 
-    /// Returns true if s can be traced back by input ch
+    /// Returns true if s can be traced back by input ch.
     bool check_reverse_transition(size_type s, char_type ch) const
     {
         return ((next(prev(s), ch) == s)
@@ -464,7 +464,7 @@ class basic_trie
                        const char_type *inputs,
                        const extremum_type &extremum);
 
-    /// Resizes state buffer
+    /// Resizes state buffer.
     void resize_state(size_type size)
     {
         // align with 4k
@@ -505,32 +505,46 @@ class basic_trie
         return p - targets;
     }
   private:
-    /// Pointer to header
+    /// Pointer to header.
     header_type *header_;
 
-    /// Pointer to state buffer
+    /// Pointer to state buffer.
     state_type *states_;
 
-    /// Last avaiable BASE value
+    /// Last avaiable BASE value.
     size_type last_base_;
 
-    /// Number of state being used
+    /// Number of state being used.
     size_type max_state_;
 
-    /// Ownership of data
+    /// Ownership of data.
     bool owner_;
 
-    /// Relocator for notifying state changing
+    /// Relocator for notifying state changing.
     trie_relocator_interface<size_type> *relocator_;
 
-    /// @see compact_header()
+    /// @see compact_header().
     mutable header_type compact_header_;
 };
 
+/**
+ * Represents an relocator adaptor @see trie_relocator_interface.
+ *
+ * @param T Type of trie
+ */
 template<typename T>
 class trie_relocator: public trie_relocator_interface<size_type> {
   public:
+    /// Represents a callback function.
     typedef void (T::*relocate_function)(size_type, size_type);
+
+    /**
+     * Constructs a trie_relocator.
+     *
+     * @param who Pointer to a host trie.
+     * @param relocate Pointer to a relocate function.
+     */
+    // XXX: change who to const ?
     trie_relocator(T *who, relocate_function relocate)
         :who_(who), relocate_(relocate)
     {
@@ -540,41 +554,71 @@ class trie_relocator: public trie_relocator_interface<size_type> {
     {
         (who_->*relocate_)(s, t);
     }
+
   private:
+    /// Pointer to a host trie.
     T *who_;
+
+    /// Pointer to relocate function.
     relocate_function relocate_;
 
+    /// Constructs a copy of trie_relocator.
     trie_relocator(const trie_relocator &);
+
+    /// Updates a trie_relocator.
     void operator=(const trie_relocator &);
 };
 
+/**
+ * Represents a two-trie structure.
+ */
 class double_trie: public trie_interface {
   public:
-    // this struct should be 64 bytes long for compatible
+    /**
+     * Represents some information about double_trie.
+     */
     typedef struct {
-        char magic[16];
-        size_type index_size;
-        size_type accept_size;
-        char unused[40];
+        char magic[16];  ///< Archive magic.
+        size_type index_size;  ///< Index array size.
+        size_type accept_size; ///< Accept array size.
+        char unused[40]; /// for 32/64bits compatible.
     } header_type;
 
+    /**
+     * Constructs a double_trie.
+     *
+     * @param size Initial size of state buffer.
+     */
     explicit double_trie(size_t size = basic_trie::kDefaultStateSize);
+
+    /**
+     * Constructs a double_trie using a trie archive.
+     *
+     * @param filename Filename of the archive.
+     */
     explicit double_trie(const char *filename);
+    
+    /// Destructs a double_trie.
     ~double_trie();
+
     void insert(const key_type &key, const value_type &value);
     bool search(const key_type &key, value_type *value) const;
     size_t prefix_search(const key_type &key, result_type *result) const;
     void build(const char *filename, bool verbose = false);
+
+    /// Returns a pointer to front trie.
     const basic_trie *front_trie() const
     {
         return lhs_;
     }
 
+    /// Returns a pointer to rear trie.
     const basic_trie *rear_trie() const
     {
         return rhs_;
     }
 
+    /// Prints debug information.
     void trace_table(size_type istart,
                      size_type astart) const
     {
@@ -611,13 +655,36 @@ class double_trie: public trie_interface {
     }
 
   protected:
+    /// Appends inputs to rear trie.
     size_type rhs_append(const char_type *inputs);
+
+    /**
+     * Inserts inputs into front trie.
+     * 
+     * @param s Mismatch state.
+     * @param inputs Buffer of char_type to be inserted.
+     * @param value Value for current key.
+     */
     void lhs_insert(size_type s, const char_type *inputs, value_type value);
+    
+    /// cleans all unused states in rear trie from state t.
     void rhs_clean_more(size_type t);
+
+    /**
+     * Inserts into rear trie.
+     *
+     * @param s Mismatch state.
+     * @param r Accept state.
+     * @param match Common string between new key and existing one in front
+     *              trie.
+     * @param ch Mismatch char_type of the existing key.
+     * @param value Value for current key.
+     */
     void rhs_insert(size_type s, size_type r,
                     const std::vector<char_type> &match,
                     const char_type *remain, char_type ch, size_type value);
 
+    /// Removes a accept state.
     void remove_accept_state(size_type s)
     {
         assert(s > 0);
@@ -626,16 +693,24 @@ class double_trie: public trie_interface {
         free_accept_entry(s);
     }
 
+    /// Returns true if state s is a separated state.
     bool check_separator(size_type s) const
     {
         return (lhs_->base(s) < 0)?true:false;
     }
 
+    /// Returns a accept state of a given separated state.
     size_type link_state(size_type s) const
     {
         return accept_[index_[-lhs_->base(s)].index].accept;
     }
 
+    /**
+      * Sets a accept state for a separated state.
+      *
+      * @param s The separated state.
+      * @param t The accept state.
+      */
     size_type set_link(size_type s, size_type t)
     {
         size_type i;
@@ -657,6 +732,7 @@ class double_trie: public trie_interface {
         return i;
     }
 
+    /// Returns how many separated state linked to accept state s.
     size_t count_referer(size_type s) const
     {
         std::map<size_type, refer_type>::const_iterator found(refer_.find(s));
@@ -666,6 +742,7 @@ class double_trie: public trie_interface {
             return found->second.referer.size();
     }
 
+    /// Returns a free index entry and Updates state s to it.
     size_type find_index_entry(size_type s)
     {
         size_type next;
@@ -689,6 +766,10 @@ class double_trie: public trie_interface {
         return -lhs_->base(s);
     }
 
+    /**
+     * Returns a free accept entry and updates the (i)th
+     * index's accept state to it.
+     */
     size_type find_accept_entry(size_type i)
     {
         size_type next;
@@ -711,6 +792,7 @@ class double_trie: public trie_interface {
         return index_[i].index;
     }
 
+    /// Returns the out degree of state s in rear trie.
     size_t outdegree(size_type s) const
     {
         char_type ch;
@@ -726,6 +808,12 @@ class double_trie: public trie_interface {
         return degree;
     }
 
+    /**
+     * Tries to remove an unused state in trie.
+     *
+     * @param t The state to be removed.
+     * @return true if it is removed.
+     */
     bool rhs_clean_one(size_type t)
     {
         assert(rhs_->check(t) > 0);
@@ -740,12 +828,18 @@ class double_trie: public trie_interface {
         return false;
     }
 
+    /**
+     * Fixes some index when there is state changing in front trie.
+     *
+     * @param s Original state.
+     * @param t Target state.
+     */
     void relocate_front(size_type s, size_type t)
     {
-        /* need to check index_[-lhs_->base(s)].index > 0
+        /* It needs to check index_[-lhs_->base(s)].index > 0
          * 'cause we will store a zero in index to indicate
          * the searching key has no accept state but its
-         * value has been stored into index table
+         * value has been stored into the index table
          */
         if (lhs_->base(s) < 0 && index_[-lhs_->base(s)].index > 0) {
             size_type r = link_state(s);
@@ -757,6 +851,12 @@ class double_trie: public trie_interface {
         }
     }
 
+    /**
+     * Fixes some index when there is state changing in rear trie.
+     *
+     * @param s Original state.
+     * @param t Target state.
+     */
     void relocate_rear(size_type s, size_type t)
     {
         if (refer_.find(s) != refer_.end()) {
@@ -772,6 +872,7 @@ class double_trie: public trie_interface {
         }
     }
 
+    /// Free an unused accept entry.
     void free_accept_entry(size_type s)
     {
         if (refer_.find(s) != refer_.end()) {
@@ -789,69 +890,133 @@ class double_trie: public trie_interface {
     }
 
   private:
+    /// Represents a separated state index.
+    typedef struct {
+        size_type accept;
+    } accept_type;
+
+    /// Represents a index to accept_type.
     typedef struct {
         value_type data;
         size_type index;
     } index_type;
-    typedef struct {
-        size_type accept;
-    } accept_type;
+
+    /// Represents a back reference from accept state to
+    /// separated state.
     typedef struct {
         size_type accept_index;
         std::set<size_type> referer;
     } refer_type;
 
+    /// Pointer to header.
     header_type *header_;
+    
+    /// Pointer to front trie(lhs_) and rear trie(rhs_).
     basic_trie *lhs_, *rhs_;
+
+    /// Pointer to index to accept_type index.
     index_type *index_;
+
+    /// Pointer to accept_type index.
     accept_type *accept_;
+
+    /// Accept state back reference.
     std::map<size_type, refer_type> refer_;
+
+    /// Temporary buffer for storing exising char_types while inserting.
     std::vector<char_type> exists_;
+
+    /// Next available entry in accept_/index_.
     size_type next_accept_, next_index_;
+
+    /// Relocator for front and rear trie.
     trie_relocator<double_trie> *front_relocator_, *rear_relocator_;
+
+    /// States to be monitored by relocator
     size_type watcher_[2];
+
+    /// List of freed accept entry.
     std::deque<size_type> free_accept_;
+
+    /// List of freed index entry.
     std::deque<size_type> free_index_;
+
+    /// Pointer to mmapped buffer
     void *mmap_;
+
+    /// Length of mmapped buffer
     size_t mmap_size_;
+
+    /// Archive magic.
     static const char magic_[16];
 };
 
+/**
+ * Represents a tail-trie structure.
+ */
 class single_trie: public trie_interface
 {
   public:
+    /// Represents an element in suffix buffer.
     typedef size_type suffix_type;
+
+    /**
+     * Represents some information about single_trie.
+     */
     typedef struct {
-        char magic[16];
-        size_type suffix_size;
-        char unused[44];
+        char magic[16];  ///< Archive magic.
+        size_type suffix_size;  ///< Size of suffix buffer.
+        char unused[44];  ///< for 32/64 bits compatible.
     } header_type;
 
+    /**
+     * Represents a resizable buffer for storing the common part of
+     * newly inserting key and an existing one.
+     */
     typedef struct {
-        char_type *data;
-        size_t size;
+        char_type *data; ///< Data buffer.
+        size_t size;     ///< Buffer size.
     } common_type;
 
+    /// Default size of common_
     static const size_t kDefaultCommonSize = 256;
 
+    /**
+     * Constructs an empty single_trie.
+     *
+     * @param s Initial size of state.
+     */
+    // XXX: should default size be kDefaultStateSize?
     explicit single_trie(size_t size = 0);
+
+    /**
+     * Constructs an single_trie from archive.
+     *
+     * @param filename Filename of the archive.
+     */
     explicit single_trie(const char *filename);
+
+    /// Destructs a single_trie.
     ~single_trie();
+
     void insert(const key_type &key, const value_type &value);
     bool search(const key_type &key, value_type *value) const;
     size_t prefix_search(const key_type &key, result_type *result) const;
     void build(const char *filename, bool verbose);
 
+    /// Returns a pointer to the trie of single_trie.
     const basic_trie *trie()
     {
         return trie_;
     }
 
+    /// Returns a pointer to the tail of single_trie.
     const suffix_type *suffix()
     {
         return suffix_;
     }
 
+    /// Prints debug information about suffix.
     void trace_suffix(size_type start, size_type count) const
     {
         size_type i;
@@ -868,6 +1033,11 @@ class single_trie: public trie_interface
     }
 
   protected:
+    /**
+     * Resizes suffix to expected size
+     *
+     * @param size Expected size.
+     */
     void resize_suffix(size_type size)
     {
         // align with 4k
@@ -876,6 +1046,11 @@ class single_trie: public trie_interface
         header_->suffix_size = nsize;
     }
 
+    /**
+     * Resizes common to expected size
+     *
+     * @param size Expected size.
+     */
     void resize_common(size_type size)
     {
         // align with 4k
@@ -884,17 +1059,49 @@ class single_trie: public trie_interface
         common_.size = nsize;
     }
 
+    /**
+     * Inserts inputs into suffix.
+     *
+     * @param s Separated state in trie
+     * @param inputs The inputs
+     * @param value The value
+     */
     void insert_suffix(size_type s, const char_type *inputs, value_type value);
+
+    /**
+     * Creates a branch in trie. This function creates a branch in trie
+     * when there are common part between newly inserting key and an
+     * existing one.
+     *
+     * @param s Separated state in trie
+     * @param inputs The inputs
+     * @param value The value
+     */
     void create_branch(size_type s, const char_type *inputs, value_type value);
 
   private:
+    /// Pointer to trie
     basic_trie *trie_;
+
+    /// Pointer to suffix
     suffix_type *suffix_;
+
+    /// Pointer to header
     header_type *header_;
+
+    /// Next available suffix
     size_type next_suffix_;
+
+    /**
+     * Temporary buffer to store common part betwee newly 
+     * inserting key and an existing one
+     */
     common_type common_;
+
     void *mmap_;
     size_t mmap_size_;
+
+    /// Archive magic
     static const char magic_[16];
 };
 #endif  // TRIE_IMPL_H_
