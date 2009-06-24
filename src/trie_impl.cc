@@ -261,11 +261,11 @@ bool basic_trie::search(const key_type &key, value_type *value) const
 }
 
 size_t
-basic_trie::prefix_search(const key_type &key, result_type *result) const
+basic_trie::prefix_search(const key_type &prefix, result_type *result) const
 {
     const char_type *p;
-    size_type s = go_forward(1, key.data(), &p);
-    key_type store(key);
+    size_type s = go_forward(1, prefix.data(), &p);
+    key_type store(prefix);
     prefix_search_aux(s, p, &store, result);
     return result->size();
 }

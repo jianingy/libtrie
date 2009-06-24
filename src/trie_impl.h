@@ -10,8 +10,8 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * The names of its contributors may not be used to endorse or promote 
- *       products derived from this software without specific prior written 
+ *     * The names of its contributors may not be used to endorse or promote
+ *       products derived from this software without specific prior written
  *       permission.
  *
  * THIS SOFTWARE IS PROVIDED BY detrox@gmail.com ''AS IS'' AND ANY
@@ -24,7 +24,7 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #ifndef TRIE_IMPL_H_
 #define TRIE_IMPL_H_
@@ -65,12 +65,44 @@
 
 BEGIN_TRIE_NAMESPACE
 
+/**
+ * Represents an interface to trie state relocator.
+ *
+ * A trie state relocator will be called when a state is being moved
+ * by relocate method of basic_trie during create_transition.
+ *
+ * @param T Trie type
+ */
 template<typename T> class trie_relocator_interface {
   public:
+
+    /**
+     * Notifies state changing
+     *
+     * @param s The original state index
+     * @param t The target state index to be moved to.
+     */
     virtual void relocate(T s, T t) = 0;
+
+    /**
+     * Destructs a trie_relocator
+     */
     virtual ~trie_relocator_interface() {}
+
+    // XXX: Disallow copy constructor and operator =
 };
 
+/**
+ * Resizes a buffer.
+ * This function works like realloc(3). If ptr is NULL, it will allocate
+ * a new buffer. If new_size is zero, the function acts like a free(3). In
+ * addition, this function sets all newly allocated units to zero.
+ *
+ * @param ptr Pointer to the buffer.
+ * @param old_size Original size of the buffer.
+ * @param new_size Expected size of the buffer.
+ * @return Pointer to new buffer with expected size.
+ */
 template<typename T>
 T* resize(T *ptr, size_t old_size, size_t new_size)
 {
@@ -101,73 +133,178 @@ T* resize(T *ptr, size_t old_size, size_t new_size)
 #endif
 }
 
+/// Represents a double-array with basic operations.
 class basic_trie
 {
   public:
+    /// Default initial size of states buffer.
     static const size_t kDefaultStateSize = 4096;
 
+    /// Represents a state
     typedef struct {
-        size_type base;
-        size_type check;
+        size_type base;  ///< The BASE value in J.Aoe's paper
+        size_type check; ///< The CHECK value in J.Aoe's paper
     } state_type;
 
-    // this struct should be 64 bytes long for compatible
+    /**
+     * Represents some information about basic_trie.
+     */
     typedef struct {
-        size_type size;
-        char unused[60];
+        size_type size;  ///< Size of state buffer
+        char unused[60]; ///< Unused, for 32/64 bits compatible.
     } header_type;
 
+    /**
+     * Represents a pair of extremum. It is used to improve the
+     * performance of find_base method.
+     */
     typedef struct {
-        char_type max;
-        char_type min;
+        char_type max; ///< A Maximum value
+        char_type min; ///< A Minimum value
     } extremum_type;
 
+    /**
+     * Constructs an empty basic_trie.
+     *
+     * @param size Initial size of state buffer.
+     * @param relocator A trie relocator if needed, @see
+     *                  trie_relocator_interface.
+     */
     explicit basic_trie(size_type size = kDefaultStateSize,
                         trie_relocator_interface<size_type> *relocator = NULL);
+
+    /**
+     * Constructs a basic_trie from given pointers.
+     *
+     * @param header Pointer to an existing header data.
+     * @param states Pointer to an existing state data buffer.
+     */
     explicit basic_trie(void *header, void *states);
+
+    /**
+     * Constructs a copy from trie.
+     *
+     * @param trie Const reference to a basic_trie.
+     */
     basic_trie(const basic_trie &trie);
-    void clone(const basic_trie &trie);
+
+    /**
+     * Copies from a trie.
+     *
+     * @param trie Const reference to a basic_trie.
+     */
     basic_trie &operator=(const basic_trie &trie);
+
+    /**
+     * Copies from a trie. see also copy constructor and operator =.
+     *
+     * @param trie Const reference to a basic_trie.
+     */
+    void clone(const basic_trie &trie);
+
+    /// Destructs a basic_trie.
     ~basic_trie();
+
+    /// Stores a value by given key.
     void insert(const key_type &key, const value_type &value);
+
+    /// Retrieves a value by given key.
     bool search(const key_type &key, value_type *value) const;
-    size_t prefix_search(const key_type &key, result_type *result) const;
+
+    /**
+     * Retrieves all key-value pairs match given prefix.
+     *
+     * @param prefix The prefix.
+     * @param[out] result Result set.
+     */
+    size_t prefix_search(const key_type &prefix, result_type *result) const;
+
+    /**
+     * Retrieves all key-value pairs match given prefix from state s.
+     *
+     * @param s Start state.
+     * @param p Mismatch character buffer.
+     * @param[out] store Temporary storage for found keys.
+     * @param[out] result Result set.
+     * @return The number of elements in the result set.
+     */
     size_t prefix_search_aux(size_type s,
                              const char_type *p,
-                             key_type *key,
+                             key_type *store,
                              result_type *result) const;
+
+    /**
+     * Creates a new tranisition from state s with input char_type.
+     *
+     * @param s Start state.
+     * @param ch The input char_type.
+     */
     size_type create_transition(size_type s, char_type ch);
+
+    /**
+     * Finds a free BASE value for storing all inputs.
+     *
+     * @param inputs Inputs to be stored.
+     * @param extremum The max and min value in inputs.
+     * @return The proper BASE value.
+     */
     size_type find_base(const char_type *inputs,
                         const extremum_type &extremum);
 
+    /**
+     * Prints all outcome transition from state s.
+     *
+     * @param s Start state.
+     */
     void trace(size_type s) const;
 
+    /**
+     * Returns a pointer to a newly created basic_trie.
+     *
+     * @param header Pointer to an existing header data.
+     * @param states Pointer to an existing state data buffer.
+     * @return Pointer to the newly created basic_trie.
+     */
     static const basic_trie *create_from_memory(void *header,
                                                 void *states)
     {
         return new basic_trie(header, states);
     }
 
+    /**
+     * Sets the last available BASE value. It uses to improve the
+     * performance of find_base.
+     *
+     * @param base The BASE value.
+     */
     void set_last_base(size_type base)
     {
         last_base_ = base;
     }
 
+    /**
+     * Sets a new state relocator.
+     *
+     * @param relocator The relocator to be used.
+     */
     void set_relocator(trie_relocator_interface<size_type> *relocator)
     {
         relocator_ = relocator;
     }
 
+    /// Get BASE value of state s
     size_type base(size_type s) const
     {
         return states_[s].base;
     }
 
+    /// Get CHECK value of state s
     size_type check(size_type s) const
     {
         return states_[s].check;
     }
 
+    /// Set a new BASE value of state s
     void set_base(size_type s, size_type val)
     {
         states_[s].base = val;
@@ -175,25 +312,28 @@ class basic_trie
             max_state_ = s;
     }
 
+    /// Set a new CHECK value of state s
     void set_check(size_type s, size_type val)
     {
         states_[s].check = val;
     }
 
-    // Get next state from s with input ch
+    /// Gets next state from s with input ch
     size_type next(size_type s, char_type ch) const
     {
         return base(s) + ch;
     }
 
-    // Get prev state from s with input ch
+    /// Get previous state from s with input ch
     size_type prev(size_type s) const
     {
         return check(s);
     }
 
-    // Go forward from state s with inputs, returns the last
-    // states and the mismatch position by pointer
+    /**
+     * Goes forward from state s with inputs. Returns the last arrived
+     * state and sets mismatch to mismatch position.
+     */
     size_type go_forward(size_type s,
                          const char_type *inputs,
                          const char_type **mismatch) const
@@ -212,6 +352,10 @@ class basic_trie
         return s;
     }
 
+    /**
+     * Goes forward from state s with reverse inputs. Returns the last
+     * arrived state and sets mismatch to mismatch position.
+     */
     size_type go_forward_reverse(size_type s,
                                  const char_type *inputs,
                                  const char_type **mismatch) const
@@ -232,8 +376,10 @@ class basic_trie
         return s;
     }
 
-    // Go backward from state s with inputs, returns the last
-    // states and the mismatch position by pointer
+    /**
+     * Goes backward from state s with inputs. Returns the last arrived
+     * state and sets mismatch to mismatch position.
+     */
     size_type go_backward(size_type s,
                           const char_type *inputs,
                           const char_type **mismatch) const
@@ -252,6 +398,10 @@ class basic_trie
         return s;
     }
 
+    /**
+     * Returns a pointer to a basic_trie header whose size is
+     * exactly the number of used items in state buffer
+     */
     const header_type *compact_header() const
     {
         memcpy(&compact_header_, header_, sizeof(header_type));
@@ -259,32 +409,39 @@ class basic_trie
         return &compact_header_;
     }
 
+    /// Returns a pointer to header
     const header_type *header() const
     {
         return header_;
     }
 
+    /// Returns a pointer to state buffer
     const state_type *states() const
     {
         return states_;
     }
 
+    /// Returns the number of elements used in state buffer
     size_type max_state() const
     {
         return max_state_;
     }
 
+    /// Returns true if a basic_trie owns the memory of its data
     bool owner() const
     {
         return owner_;
     }
 
+    /// Returns true if there is a transition from s to t
     bool check_transition(size_type s, size_type t) const
     {
         return (s > 0
                 && t > 0
                 && t < header_->size && check(t) == s)?true:false;
     }
+
+    /// Returns true if s can be traced back by input ch
     bool check_reverse_transition(size_type s, char_type ch) const
     {
         return ((next(prev(s), ch) == s)
@@ -292,11 +449,22 @@ class basic_trie
     }
 
   protected:
+    /**
+     * Relocates all target states linked from state s by changing the BASE
+     * of s.
+     *
+     * @param stand A state which is using while relocating
+     * @param s Start state
+     * @param inputs More char_types to be fitted by relocating.
+     * @param extremum The max and min value of inputs
+     * @return New base.
+     */
     size_type relocate(size_type stand,
                        size_type s,
                        const char_type *inputs,
                        const extremum_type &extremum);
 
+    /// Resizes state buffer
     void resize_state(size_type size)
     {
         // align with 4k
@@ -305,9 +473,11 @@ class basic_trie
         header_->size = nsize;
     }
 
-    // Find out all exists targets from s and store them into *targets.
-    // If max is not null, the maximum char makes state transit from s to
-    // those targets will be stored into max. Same to min.
+    /**
+     * Finds out all exists targets from s and stores them into targets.
+     * If extremum is not null, the max and min value of targets will be
+     * stored into it.
+     */
     size_type find_exist_target(size_type s,
                                 char_type *targets,
                                 extremum_type *extremum) const
@@ -335,12 +505,25 @@ class basic_trie
         return p - targets;
     }
   private:
+    /// Pointer to header
     header_type *header_;
+
+    /// Pointer to state buffer
     state_type *states_;
+
+    /// Last avaiable BASE value
     size_type last_base_;
+
+    /// Number of state being used
     size_type max_state_;
+
+    /// Ownership of data
     bool owner_;
+
+    /// Relocator for notifying state changing
     trie_relocator_interface<size_type> *relocator_;
+
+    /// @see compact_header()
     mutable header_type compact_header_;
 };
 
@@ -561,7 +744,7 @@ class double_trie: public trie_interface {
     {
         /* need to check index_[-lhs_->base(s)].index > 0
          * 'cause we will store a zero in index to indicate
-         * the searching key has no accept state but its 
+         * the searching key has no accept state but its
          * value has been stored into index table
          */
         if (lhs_->base(s) < 0 && index_[-lhs_->base(s)].index > 0) {
@@ -580,10 +763,10 @@ class double_trie: public trie_interface {
             accept_[refer_[s].accept_index].accept = t;
             refer_[t] = refer_[s];
             free_accept_entry(s);
-        } 
+        }
         if (watcher_[0] == s) {
             watcher_[0] = t;
-        } 
+        }
         if (watcher_[1] == s) {
             watcher_[1] = t;
         }

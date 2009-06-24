@@ -39,24 +39,16 @@
 
 BEGIN_TRIE_NAMESPACE
 
-/**
- * Represents the value to be stored in double-array.
- */
+/// Represents a value in double-array.
 typedef int32_t value_type;
 
-/**
- * Represents the size/index of double-array.
- */
+/// Represents a size or an index value for accessing states in double-array.
 typedef int32_t size_type;
 
-/**
- * Represents the transition character.
- */
+/// Represents a transition character.
 typedef int32_t char_type;
 
-/**
- * Represents the type of trie.
- */
+/// Represents a trie type.
 enum trie_type {
     UNKNOW = 0,   /**< Unknow. */
     SINGLE_TRIE,  /**< Tail Trie. */
@@ -64,41 +56,51 @@ enum trie_type {
 };
 
 /**
- * Exception indicates errors while operating on
+ * Represents trie archive error.
+ *
+ * This exception will be threw when there are errors about
  * trie's index file.
  */
 class bad_trie_archive: public std::runtime_error {
   public:
+    /**
+     * Constructs a bad_trie_archive.
+     *
+     * @param s Detail description.
+     */
     explicit bad_trie_archive(const char *s):std::runtime_error(s) {}
 };
 
 /**
- * Exception indicates errors while building trie from
+ * Represents source text error.
+ *
+ * This exception will be threw when there are errors about
  * a formatted text file.
  */
 class bad_trie_source: public std::runtime_error {
   public:
+    /**
+     * Constructs a bad_trie_source.
+     *
+     * @param s Detail description.
+     */
     explicit bad_trie_source(const char *s):std::runtime_error(s) {}
 };
 
 /**
- * Represents the key to be stored in double-array.
+ * Represents a key to access trie.
+ *
+ * This class can convert other data format to trie's key.
  */
 class key_type {
   public:
-    /**
-     * The size of charset. 
-     */
+    /// Charset size
     static const char_type kCharsetSize = 257;
 
-    /**
-     * Terminator character (should not in charset).
-     */
+    /// Terminator character (character not in charset).
     static const char_type kTerminator = kCharsetSize;
 
-    /**
-     * Default constructor.
-     */
+    /// Constructs an empty key_type.
     key_type()
         :cstr_(NULL), cstr_capacity_(0),
          data_(NULL), data_capacity_(0),
@@ -106,7 +108,8 @@ class key_type {
     {}
     
     /**
-     * Construct from a c-style data.
+     * Constructs a key_type from a c-style data.
+     *
      * @param data Pointer to the c-style data.
      * @param length Length of the c-style data.
      */
@@ -119,8 +122,9 @@ class key_type {
     }
 
     /**
-     * Copy constructor.
-     * @param key Const reference to a key_type object.
+     * Constructs a copy from a key.
+     *
+     * @param key The key
      */
     explicit key_type(const key_type &key)
         :cstr_(NULL), cstr_capacity_(0),
@@ -131,8 +135,9 @@ class key_type {
     }
 
     /**
-     * Assignment operator.
-     * @param key Const reference to a key object.
+     * Copies from a key.
+     *
+     * @param rhs The key
      */
     const key_type &operator=(const key_type &rhs)
     {
@@ -141,7 +146,7 @@ class key_type {
     }
 
     /**
-     * Destructor.
+     * Destruct a key_type.
      */
     ~key_type()
     {
@@ -152,7 +157,7 @@ class key_type {
     }
 
     /**
-     * Return a const pointer to internal data.
+     * Returns a const pointer to internal data of a key_type.
      */
     const char_type *data() const
     {
@@ -160,37 +165,26 @@ class key_type {
     }
 
     /**
-     * Return the length of internal data.
+     * Returns length of a key_type.
      */
     size_t length() const
     {
         return length_;
     }
 
-    /**
-     * Convert char to transition char.
-     * @param ch char to be converted.
-     * @return Converted result.
-     */
+    /// Converts a char to char_type.
     static char_type char_in(const char ch)
     {
         return static_cast<unsigned char>(ch + 1);
     }
 
-    /**
-     * Convert transition char to char.
-     * @param ch char_type character to be converted.
-     * @return Converted result.
-     */
+    /// Converts a char_type to char.
     static char char_out(char_type ch)
     {
         return static_cast<char>(ch - 1);
     }
 
-    /**
-     * Add a character at the end
-     * @param ch char to be pushed.
-     */
+    /// Appends a char_type to the end of a key_type.
     void push(char_type ch)
     {
         if (length_ + 1 >= data_capacity_)
@@ -200,8 +194,8 @@ class key_type {
     }
 
     /**
-     * Remove the character at the end return the char.
-     * @return The character at the end.
+     * Removes a char_type from the end of a key_type and returns its
+     * value.
      */
     char_type pop()
     {
@@ -211,9 +205,7 @@ class key_type {
         return ch;
     }
 
-    /**
-     * Empty data buffer.
-     */
+    /// Clears a key_type.
     void clear()
     {
         data_[0] = kTerminator;
@@ -221,8 +213,9 @@ class key_type {
     }
 
     /**
-     * Convert data buffer to c-style data buffer and return it.
-     * @return Pointer to the c-style data buffer.
+     * Returns a key_type as c-style string.
+     *
+     * @return Pointer to buffer of the c-style string.
      */
     const char *c_str() const
     {
@@ -236,8 +229,9 @@ class key_type {
     }
 
     /**
-     * Assign from c-style data.
-     * @param data The data to be assigned.
+     * Updates a key_type with a c-style data.
+     *
+     * @param data Pointer to the data.
      * @param length Length of the data.
      */
     void assign(const char *data, size_t length)
@@ -252,8 +246,9 @@ class key_type {
     }
 
     /**
-     * Assign from a transition char string.
-     * @param data The data to be assigned.
+     * Updates a key_type with a char_type data.
+     *
+     * @param data Pointer to the data.
      * @param length Length of the data.
      */
     void assign(const char_type *data, size_t length)
@@ -269,8 +264,9 @@ class key_type {
 
   protected:
     /**
-     * Resize internal data buffer
-     * @param size Expected size
+     * Resizes the internal data buffer of a key_type.
+     *
+     * @param size Expected size.
      */
     void resize_data(size_t size)
     {
@@ -281,7 +277,8 @@ class key_type {
     }
 
     /**
-     * Resize c-style data buffer for converting
+     * Resizes the buffer which is used to convert key_type to c-style
+     * string.
      */
     void resize_cstr() const
     {
@@ -291,107 +288,106 @@ class key_type {
     }
 
   private:
-    /**
-     * C-style data buffer for converting
-     */
+    /// a C-style buffer for converting.
     mutable char *cstr_;
-    /**
-     * Size of cstr_ buffer
-     */
+
+    /// Size of cstr_.
     mutable size_t cstr_capacity_;
-    /**
-     * data buffer
-     */
+
+    /// Internal data buffer.
     char_type *data_;
-    /**
-     * Size of data_ buffer
-     */
+
+    /// Size of data_.
     size_t data_capacity_;
-    /**
-     * Length of data in internal data buffer
-     */
+
+    /// Length of data_.
     size_t length_;
 };
 
-/**
- * Represent the result set for prefix_search
- */
+/// Represents a result set for prefix_search.
 typedef std::vector<std::pair<key_type, value_type> > result_type;
 
 /**
- * Interface for manipulating different trie structure.
+ * Represents an interface for different trie structure.
  */
 class trie_interface {
   public:
-    /**
-     * Default constructor.
-     */
+    /// Constructs a trie_interface.
     trie_interface() {}
 
     /**
-     * construct by a specified size.
+     * Constructs a trie_interface with a specified state size.
+     **
      * @param size The initial size of states.
      */
     explicit trie_interface(size_t size) {}
 
     /**
-     * Construct from a specified archive file.
-     * @param filename Filename of the archive file.
+     * Constructs a trie_interface from a archive file.
+     *
+     * @param filename The archive filename.
      */
     explicit trie_interface(const char *filename) {}
 
     /**
-     * Insert an element into trie.
-     * @param key Key to the element.
-     * @param value Value of the element.
+     * Stores a value_type into trie using a key_type as key.
+     *
+     * @param key The key.
+     * @param value The value_type.
      */
     virtual void insert(const key_type &key, const value_type &value) = 0;
 
     /**
-     * Retrieve value of element by given key.
-     * @param key Key to the element.
-     * @param value Value of the element.
+     * Retrieves a value_type from trie using a key_type as key.
+     *
+     * @param key The key.
+     * @param value The value_type.
      * @return true if found.
      */
     virtual bool search(const key_type &key, value_type *value) const = 0;
 
     /**
-     * Insert an element into trie.
-     * @param inputs Key to the element represented by a c-style string.
-     * @param length Length of the key.
-     * @param value Value of the element.
+     * Stores a value_type into trie using a c-style string as key
+     *
+     * @param inputs Buffer of the key.
+     * @param length Length of the key buffer.
+     * @param value The value_type.
      */
     virtual void insert(const char *inputs, size_t length,
                         value_type value);
 
     /**
-     * Retrieve value of element by given key.
-     * @param inputs Key to the element represented by a c-style string.
-     * @param length Length of the key.
-     * @param value Value of the element.
+     * Retrieves a value_type from trie using a c-style string as key
+     *
+     * @param inputs Buffer of the key.
+     * @param length Length of the key buffer.
+     * @param value The value_type.
      * @return true if found.
      */
     virtual bool search(const char *inputs, size_t length,
                         value_type *value) const;
 
     /**
-     * Retrieve all keys start with given prefix.
-     * @param key The given prefix.
-     * @param result Result set.
-     * @return Size of the result set.
+     * Retrieves all key-value pairs match given prefix.
+     *
+     * @param key The prefix.
+     * @param[out] result Result set contains the existing keys.
+     * @return The number of elements in the result set.
      */
     virtual size_t prefix_search(const key_type &key,
                                  result_type *result) const = 0;
     /**
-     * Build a trie archive with current data.
+     * Builds a trie archive.
+     *
      * @param filename Filename of the archive.
      * @param verbose Display detail information while building
-     *                if it sets to true.
+     *                if sets to true.
      */
     virtual void build(const char *filename, bool verbose = false) = 0;
 
     /**
-     * Build a trie from a formatted text file.
+     * Updates a trie from a formatted text file.
+     *
      * @param source Filename of the text file.
      * @param verbose Display detail information while reading
      *                if it sets to true.
@@ -399,22 +395,24 @@ class trie_interface {
     virtual void read_from_text(const char *source, bool verbose = false);
 
     /**
-     * Destructor
+     * Destruct a trie_interface.
      */
     virtual ~trie_interface() = 0;
 };
 
 /**
- * Create an empty trie.
- * @param trie_type The type of trie to be create.
- * @param size The initial size of trie. This is not an accurate value but
- *             a suggestion. Increase/Decrease this value according to
- *             the size of your data.
+ * Creates an empty trie.
+ *
+ * @param trie_type The type of the trie to be created.
+ * @param size The initial size of the trie. This is not an accurate value
+ *             but a suggestion. Please increase or decrease this value
+ *             according to the size of your data.
  */
 trie_interface *create_trie(trie_type type = DOUBLE_TRIE, size_t size = 4096);
 
 /** 
- * Create a trie from disk archive.
+ * Creates a trie from a trie archive.
+ *
  * @param archive The filename of the archive.
  */
 trie_interface *create_trie(const char *archive);
