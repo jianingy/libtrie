@@ -10,8 +10,8 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * The names of its contributors may not be used to endorse or promote 
- *       products derived from this software without specific prior written 
+ *     * The names of its contributors may not be used to endorse or promote
+ *       products derived from this software without specific prior written
  *       permission.
  *
  * THIS SOFTWARE IS PROVIDED BY detrox@gmail.com ''AS IS'' AND ANY
@@ -24,7 +24,7 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #include <sys/time.h>
 #include <stdint.h>
@@ -39,7 +39,7 @@
 
 BEGIN_TRIE_NAMESPACE
 
-static trie_type find_archive_type(const char *archive)
+static trie::trie_type find_archive_type(const char *archive)
 {
     FILE *fp;
     char magic[16] = {0};
@@ -47,17 +47,17 @@ static trie_type find_archive_type(const char *archive)
         size_t length = fread(magic, 1, sizeof(magic) / sizeof(char) - 1, fp);
         fclose(fp);
         if (strncmp(magic, "TWO_TRIE", length) == 0)
-            return DOUBLE_TRIE;
+            return trie::DOUBLE_TRIE;
         else if (strncmp(magic, "TAIL_TRIE", length) == 0)
-            return SINGLE_TRIE;
+            return trie::SINGLE_TRIE;
         else
-            return UNKNOW;
+            return trie::UNKNOW;
     } else {
         throw bad_trie_archive("file error");
     }
 }
 
-trie_interface *create_trie(trie_type type, size_t size)
+trie* trie::create_trie(trie_type type, size_t size)
 {
     if (type == SINGLE_TRIE)
         return new single_trie(size);
@@ -65,7 +65,7 @@ trie_interface *create_trie(trie_type type, size_t size)
         return new double_trie(size);
 }
 
-trie_interface *create_trie(const char *archive)
+trie* trie::create_trie(const char *archive)
 {
     trie_type type = find_archive_type(archive);
     if (type  == SINGLE_TRIE)
@@ -76,21 +76,21 @@ trie_interface *create_trie(const char *archive)
         throw bad_trie_archive("file magic error");
 }
 
-void trie_interface::insert(const char *inputs, size_t length,
+void trie::insert(const char *inputs, size_t length,
                             value_type value)
 {
     key_type key(inputs, length);
     insert(key, value);
 }
 
-bool trie_interface::search(const char *inputs, size_t length,
+bool trie::search(const char *inputs, size_t length,
                             value_type *value) const
 {
     key_type key(inputs, length);
     return search(key, value);
 }
 
-void trie_interface::read_from_text(const char *source, bool verbose)
+void trie::read_from_text(const char *source, bool verbose)
 {
     FILE *file;
     if ((file = fopen(source, "r"))) {

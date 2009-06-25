@@ -10,19 +10,19 @@
 
 #include "trie.h"
 
-using namespace trie;
+using namespace dutil;
 
 static void *
 query_trie(const char *query, const char *index, bool prefix, bool verbose)
 {
     int retval = 0;
-    value_type value;
-    trie_interface *mtrie = create_trie(index);
-    key_type key(query, strlen(query));
+    trie::value_type value;
+    trie *mtrie = trie::create_trie(index);
+    trie::key_type key(query, strlen(query));
     if (prefix) {
-        result_type result;
+        trie::result_type result;
         mtrie->prefix_search(key, &result);
-        result_type::const_iterator it;
+        trie::result_type::const_iterator it;
         for (it = result.begin(); it != result.end(); it++)
             std::cout << it->second << " " << it->first.c_str() << std::endl;
     } else {
@@ -38,9 +38,9 @@ query_trie(const char *query, const char *index, bool prefix, bool verbose)
 }
 
 static void *
-build_trie(const char *source, const char *index, trie_type type, bool verbose)
+build_trie(const char *source, const char *index, trie::trie_type type, bool verbose)
 {
-    trie_interface *mtrie = create_trie(type);
+    trie *mtrie = trie::create_trie(type);
     mtrie->read_from_text(source, verbose);
     if (verbose)
         std::cerr << "writing to disk..." << std::endl;
@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 {
     int c;
     const char *index = NULL, *source = NULL, *query = NULL;
-    trie_type type = DOUBLE_TRIE;
+    trie::trie_type type = trie::DOUBLE_TRIE;
     bool verbose = false;
     bool prefix = false;
     bool dump = false;
@@ -117,10 +117,10 @@ int main(int argc, char *argv[])
             case 't':
                 switch (atoi(optarg)) {
                     case 1:
-                        type = SINGLE_TRIE;
+                        type = trie::SINGLE_TRIE;
                         break;
                     case 2:
-                        type = DOUBLE_TRIE;
+                        type = trie::DOUBLE_TRIE;
                         break;
                     default:
                         help_message();

@@ -11,7 +11,7 @@
 #define unsigned_value(x, y) (unsigned int)(j + 1)
 #define signed_value(x, y) (int)(3 - j)
 
-using namespace trie;
+using namespace dutil;
 
 int main(int argc, char *argv[])
 {
@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	trie_interface *trie = create_trie(argv[1][0] == '1'?SINGLE_TRIE:DOUBLE_TRIE);
+	trie *trie = trie::create_trie(argv[1][0] == '1'?SINGLE_TRIE:DOUBLE_TRIE);
 	size_t i;
 	const char prefix[] = "back!";
 	const char *dict[] = {"bachelor", "back", "badge", "badger", "badness", "bcs", "backbone"};

@@ -63,7 +63,7 @@ static const char* pretty_size(size_t size, char *buf, size_t buflen)
     return buf;
 }
 
-trie_interface::~trie_interface()
+trie::~trie()
 {
 }
 
@@ -131,7 +131,7 @@ basic_trie::~basic_trie()
     }
 }
 
-size_type
+trie::size_type
 basic_trie::find_base(const char_type *inputs, const extremum_type &extremum)
 {
     bool found;
@@ -159,7 +159,7 @@ basic_trie::find_base(const char_type *inputs, const extremum_type &extremum)
     return i;
 }
 
-size_type
+trie::size_type
 basic_trie::relocate(size_type stand,
                      size_type s,
                      const char_type *inputs,
@@ -196,7 +196,7 @@ basic_trie::relocate(size_type stand,
     return stand;
 }
 
-size_type
+trie::size_type
 basic_trie::create_transition(size_type s, char_type ch)
 {
     char_type targets[key_type::kCharsetSize + 1];
@@ -430,7 +430,7 @@ double_trie::~double_trie()
     sanity_delete(rhs_);
 }
 
-size_type
+trie::size_type
 double_trie::rhs_append(const char_type *inputs)
 {
     const char_type *p;

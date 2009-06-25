@@ -34,7 +34,7 @@
 #include <cstdlib>
 #include <stdexcept>
 
-#define BEGIN_TRIE_NAMESPACE namespace trie {
+#define BEGIN_TRIE_NAMESPACE namespace dutil {
 #define END_TRIE_NAMESPACE }
 
 BEGIN_TRIE_NAMESPACE
@@ -46,22 +46,6 @@ BEGIN_TRIE_NAMESPACE
  *
  *  The libtrie's API
  */
-
-/// Represents a value in double-array.
-typedef int32_t value_type;
-
-/// Represents a size or an index value for accessing states in double-array.
-typedef int32_t size_type;
-
-/// Represents a transition character.
-typedef int32_t char_type;
-
-/// Represents a trie type.
-enum trie_type {
-    UNKNOW = 0,   /**< Unknow. */
-    SINGLE_TRIE,  /**< Tail Trie. */
-    DOUBLE_TRIE   /**< Two Trie. */
-};
 
 /**
  * Indicates a Trie archive error.
@@ -96,12 +80,148 @@ class bad_trie_source: public std::runtime_error {
 };
 
 /**
+ * An interface for different trie structure.
+ */
+class trie {
+  public:
+    /// Represents a transition character.
+    typedef int32_t char_type;
+
+    /// Represents a value in double-array.
+    typedef int32_t value_type;
+
+    /// Represents a size or an index value for accessing states in double-array.
+    typedef int32_t size_type;
+
+    /// Represents a key to access trie.
+    class key_type;
+
+    /// Represents a result set for prefix_search.
+    typedef std::vector<std::pair<key_type, value_type> > result_type;
+
+    /// Represents a trie type.
+    enum trie_type {
+        UNKNOW = 0,   /**< Unknow. */
+        SINGLE_TRIE,  /**< Tail Trie. */
+        DOUBLE_TRIE   /**< Two Trie. */
+    };
+
+
+    /// Constructs a trie interface.
+    trie() {}
+
+    /**
+     * Constructs a trie interface with a specified state size.
+     **
+     * @param size The initial size of states.
+     */
+    explicit trie(size_t size) {}
+
+    /**
+     * Constructs a trie interface from a archive file.
+     *
+     * @param filename The archive filename.
+     */
+    explicit trie(const char *filename) {}
+
+    /**
+     * Stores a value_type into trie using a key_type as key.
+     *
+     * @param key The key.
+     * @param value The value_type.
+     */
+    virtual void insert(const key_type &key, const value_type &value) = 0;
+
+    /**
+     * Retrieves a value_type from trie using a key_type as key.
+     *
+     * @param key The key.
+     * @param value The value_type.
+     * @return true if found.
+     */
+    virtual bool search(const key_type &key, value_type *value) const = 0;
+
+    /**
+     * Stores a value_type into trie using a c-style string as key
+     *
+     * @param inputs Buffer of the key.
+     * @param length Length of the key buffer.
+     * @param value The value_type.
+     */
+    virtual void insert(const char *inputs, size_t length,
+                        value_type value);
+
+    /**
+     * Retrieves a value_type from trie using a c-style string as key
+     *
+     * @param inputs Buffer of the key.
+     * @param length Length of the key buffer.
+     * @param value The value_type.
+     * @return true if found.
+     */
+    virtual bool search(const char *inputs, size_t length,
+                        value_type *value) const;
+
+    /**
+     * Retrieves all key-value pairs match given prefix.
+     *
+     * @param key The prefix.
+     * @param[out] result Result set contains the existing keys.
+     * @return The number of elements in the result set.
+     */
+    virtual size_t prefix_search(const key_type &key,
+                                 result_type *result) const = 0;
+    /**
+     * Builds a trie archive.
+     *
+     * @param filename Filename of the archive.
+     * @param verbose Display detail information while building
+     *                if sets to true.
+     */
+    virtual void build(const char *filename, bool verbose = false) = 0;
+
+    /**
+     * Updates a trie from a formatted text file.
+     *
+     * @param source Filename of the text file.
+     * @param verbose Display detail information while reading
+     *                if it sets to true.
+     */
+    virtual void read_from_text(const char *source, bool verbose = false);
+
+    /**
+     * Destruct a trie interface.
+     */
+    virtual ~trie() = 0;
+
+    /**
+     * Creates an empty trie.
+     *
+     * @param type The type of the trie to be created.
+     * @param size The initial size of the trie. This is not an accurate value
+     *             but a suggestion. Please increase or decrease this value
+     *             according to the size of your data.
+     */
+    static trie *create_trie(trie_type type = DOUBLE_TRIE, size_t size = 4096);
+
+    /**
+     * Creates a trie from a trie archive.
+     *
+     * @param archive The filename of the archive.
+     */
+    static trie *create_trie(const char *archive);
+};
+
+/**
  * Represents a key to access trie.
  *
  * This class can convert other data format to trie's key.
  */
-class key_type {
+class trie::key_type {
   public:
+    /// Shortcut for trie::char_type
+    typedef trie::char_type char_type;
+
     /// Charset size
     static const char_type kCharsetSize = 257;
 
@@ -303,118 +423,6 @@ class key_type {
     size_t length_;  ///< Length of data_.
 };
 
-/// Represents a result set for prefix_search.
-typedef std::vector<std::pair<key_type, value_type> > result_type;
-
-/**
- * An interface for different trie structure.
- */
-class trie_interface {
-  public:
-    /// Constructs a trie_interface.
-    trie_interface() {}
-
-    /**
-     * Constructs a trie_interface with a specified state size.
-     **
-     * @param size The initial size of states.
-     */
-    explicit trie_interface(size_t size) {}
-
-    /**
-     * Constructs a trie_interface from a archive file.
-     *
-     * @param filename The archive filename.
-     */
-    explicit trie_interface(const char *filename) {}
-
-    /**
-     * Stores a value_type into trie using a key_type as key.
-     *
-     * @param key The key.
-     * @param value The value_type.
-     */
-    virtual void insert(const key_type &key, const value_type &value) = 0;
-
-    /**
-     * Retrieves a value_type from trie using a key_type as key.
-     *
-     * @param key The key.
-     * @param value The value_type.
-     * @return true if found.
-     */
-    virtual bool search(const key_type &key, value_type *value) const = 0;
-
-    /**
-     * Stores a value_type into trie using a c-style string as key
-     *
-     * @param inputs Buffer of the key.
-     * @param length Length of the key buffer.
-     * @param value The value_type.
-     */
-    virtual void insert(const char *inputs, size_t length,
-                        value_type value);
-
-    /**
-     * Retrieves a value_type from trie using a c-style string as key
-     *
-     * @param inputs Buffer of the key.
-     * @param length Length of the key buffer.
-     * @param value The value_type.
-     * @return true if found.
-     */
-    virtual bool search(const char *inputs, size_t length,
-                        value_type *value) const;
-
-    /**
-     * Retrieves all key-value pairs match given prefix.
-     *
-     * @param key The prefix.
-     * @param[out] result Result set contains the existing keys.
-     * @return The number of elements in the result set.
-     */
-    virtual size_t prefix_search(const key_type &key,
-                                 result_type *result) const = 0;
-    /**
-     * Builds a trie archive.
-     *
-     * @param filename Filename of the archive.
-     * @param verbose Display detail information while building
-     *                if sets to true.
-     */
-    virtual void build(const char *filename, bool verbose = false) = 0;
-
-    /**
-     * Updates a trie from a formatted text file.
-     *
-     * @param source Filename of the text file.
-     * @param verbose Display detail information while reading
-     *                if it sets to true.
-     */
-    virtual void read_from_text(const char *source, bool verbose = false);
-
-    /**
-     * Destruct a trie_interface.
-     */
-    virtual ~trie_interface() = 0;
-};
-
-/**
- * Creates an empty trie.
- *
- * @param trie_type The type of the trie to be created.
- * @param size The initial size of the trie. This is not an accurate value
- *             but a suggestion. Please increase or decrease this value
- *             according to the size of your data.
- */
-trie_interface *create_trie(trie_type type = DOUBLE_TRIE, size_t size = 4096);
-
-/**
- * Creates a trie from a trie archive.
- *
- * @param archive The filename of the archive.
- */
-trie_interface *create_trie(const char *archive);
 
 END_TRIE_NAMESPACE
 

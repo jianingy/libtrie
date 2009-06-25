@@ -134,7 +134,7 @@ T* resize(T *ptr, size_t old_size, size_t new_size)
 }
 
 /// A double-array with basic operations.
-class basic_trie
+class basic_trie: public trie
 {
   public:
     /// Default initial size of state buffer.
@@ -205,19 +205,21 @@ class basic_trie
     /// Destructs a basic_trie.
     ~basic_trie();
 
-    /// Stores a value using key.
     void insert(const key_type &key, const value_type &value);
-
-    /// Retrieves a value using key.
     bool search(const key_type &key, value_type *value) const;
-
-    /**
-     * Retrieves all key-value pairs match given prefix.
-     *
-     * @param prefix The prefix.
-     * @param[out] result Result set.
-     */
     size_t prefix_search(const key_type &prefix, result_type *result) const;
+
+    void build(const char *filename, bool verbose)
+    {
+        /// @todo implement build for basic_trie
+        throw std::runtime_error("not implement");
+    }
+
+    void read_from_text(const char *source, bool verbose)
+    {
+        /// @todo implement build for basic_trie
+        throw std::runtime_error("not implement");
+    }
 
     /**
      * Retrieves all key-value pairs match given prefix from state s.
@@ -524,8 +526,11 @@ class basic_trie
  * @param T Type of trie
  */
 template<typename T>
-class trie_relocator: public trie_relocator_interface<size_type> {
+class trie_relocator: public trie_relocator_interface<trie::size_type> {
   public:
+    /// Shortcut for size_type
+    typedef trie::size_type size_type;
+
     /// Represents a callback function.
     typedef void (T::*relocate_function)(size_type, size_type);
 
@@ -563,7 +568,7 @@ class trie_relocator: public trie_relocator_interface<size_type> {
 /**
  * A two-trie.
  */
-class double_trie: public trie_interface {
+class double_trie: public trie {
   public:
     /**
      * Represents some information about double_trie.
@@ -946,7 +951,7 @@ class double_trie: public trie_interface {
 /**
  * A tail-trie.
  */
-class single_trie: public trie_interface
+class single_trie: public trie
 {
   public:
     /// Represents an element in suffix buffer.

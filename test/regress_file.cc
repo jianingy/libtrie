@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include "trie.h"
 
-using namespace trie;
+using namespace dutil;
 
 int main(int argc, char *argv[])
 {
@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
     }
 
     std::ifstream source(argv[1]);
-    trie_interface *trie = create_trie(atoi(argv[2]) == 1?SINGLE_TRIE:DOUBLE_TRIE);
+    trie *trie = trie::create_trie(atoi(argv[2]) == 1?SINGLE_TRIE:DOUBLE_TRIE);
     key_type key;
     struct timezone tz;
     struct timeval total = {0, 0}, tv[2];

@@ -11,11 +11,13 @@
 #define unsigned_value(x, y) static_cast<unsigned int>(j + 1)
 #define signed_value(x, y) static_cast<int>(3 - j)
 
+using namespace dutil;
+
 int main()
 {
     size_t i, j;
     trie::value_type val;
-    trie::key_type key;
+    key_type key;
     const char *dict[][256] = {
         {"abc", "def"},
         {"baby", "bachelor", "back", "badge", "badger", "badness", "bcs"},
@@ -36,7 +38,7 @@ int main()
     printf("\nbasic_trie\n");
     printf("----------\n");
     for (i = 0; dict[i][0]; i++) {
-        trie::basic_trie btrie;
+        basic_trie btrie;
         printf("wordset %d: ", i);
         for (j = 0; dict[i][j]; j++) {
             key.assign(dict[i][j], length(dict[i][j]));
@@ -59,13 +61,13 @@ int main()
     printf("\nbasic_trie copy constructor\n");
     printf("----------\n");
     for (i = 0; dict[i][0]; i++) {
-        trie::basic_trie btrie;
+        basic_trie btrie;
         printf("wordset %d: ", i);
         for (j = 0; dict[i][j]; j++) {
             key.assign(dict[i][j], length(dict[i][j]));
             btrie.insert(key, unsigned_value(j, i));
         }
-        trie::basic_trie ctrie(btrie);
+        basic_trie ctrie(btrie);
         for (j = 0; dict[i][j]; j++) {
             key.assign(dict[i][j], length(dict[i][j]));
             if (ctrie.search(key, &val) && (unsigned)val
@@ -83,13 +85,13 @@ int main()
     printf("\nbasic_trie operator = \n");
     printf("----------\n");
     for (i = 0; dict[i][0]; i++) {
-        trie::basic_trie btrie;
+        basic_trie btrie;
         printf("wordset %d: ", i);
         for (j = 0; dict[i][j]; j++) {
             key.assign(dict[i][j], length(dict[i][j]));
             btrie.insert(key, unsigned_value(j, i));
         }
-        trie::basic_trie ctrie;
+        basic_trie ctrie;
         ctrie = btrie;
         for (j = 0; dict[i][j]; j++) {
             key.assign(dict[i][j], length(dict[i][j]));
@@ -109,7 +111,7 @@ int main()
     printf("\ndouble_trie\n");
     printf("----------\n");
     for (i = 0; dict[i][0]; i++) {
-        trie::double_trie btrie;
+        double_trie btrie;
         printf("wordset %d: ", i);
         for (j = 0; dict[i][j]; j++) {
             key.assign(dict[i][j], length(dict[i][j]));
@@ -134,7 +136,7 @@ int main()
 
 /* binary test */
     do {
-        trie::double_trie btrie;
+        double_trie btrie;
         const char *binary[] = {"\x00\x01\x02", "\x00\x01", "\x00"};
         size_t binary_size[] = {3, 2, 1};
         printf("\ndouble_trie binary data\n");
@@ -164,7 +166,7 @@ int main()
     printf("\nsingle_trie\n");
     printf("----------\n");
     for (i = 0; dict[i][0]; i++) {
-        trie::single_trie btrie;
+        single_trie btrie;
         printf("wordset %d: ", i);
         for (j = 0; dict[i][j]; j++) {
             key.assign(dict[i][j], length(dict[i][j]));
