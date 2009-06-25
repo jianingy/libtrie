@@ -430,4 +430,13 @@ END_TRIE_NAMESPACE
 
 #endif  // TRIE_H_
 
+/**
+
+@mainapge libtrie - An implementation of Double-Array Trie
+
+*/
+
+
+ */
+
 // vim: ts=4 sw=4 ai et

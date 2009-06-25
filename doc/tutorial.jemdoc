@@ -20,10 +20,10 @@ To create a trie use the following statements
 ~~~
 {}{C++}
 /* create a tail-trie */
-trie::trie_interface *tailtrie = trie::create_trie(trie::SINGLE_TRIE);
+dutil::trie *tailtrie = dutil::trie::create_trie(trie::SINGLE_TRIE);
 
 /* create a two-trie */
-trie::trie_interface *twotrie = trie::create_trie(trie::DOUBLE_TRIE);
+dutil::trie *twotrie = dutil::trie::create_trie(trie::DOUBLE_TRIE);
 ~~~
 
 == Insertion
@@ -33,14 +33,14 @@ constructor is a pointer to the data which you wanna let it be the key and the s
 is the length of the data.
 ~~~
 {}{C++}
-trie::key_type key("MyKey", 5);
+dutil::trie::key_type key("MyKey", 5);
 ~~~
 
 Once a key is ready, you can use it to store a /trie::value_type/ value which is a 32bits
 integer currently(I'll make it support more data types in future).
 ~~~
 {}{C++}
-trie::value_type value = 5678;
+dutil::trie::value_type value = 5678;
 twotrie->insert(key, 1234);
 tailtrie->insert(key, value);
 ~~~
@@ -51,8 +51,8 @@ To search a trie you also need a /trie::key_type/ key described in the insertion
 The returned value will be stored by a given pointer. Let's see it.
 ~~~
 {}{C++}
-trie::value_type value;
-trie::key_type key("MyKey", 5);
+dutil::trie::value_type value;
+dutil::trie::key_type key("MyKey", 5);
 twotrie->search(key, &value);
 printf("value = %d\n", value);
 ~~~
