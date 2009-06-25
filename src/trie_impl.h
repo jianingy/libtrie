@@ -66,42 +66,42 @@
 BEGIN_TRIE_NAMESPACE
 
 /**
- * Represents an interface to trie state relocator.
+ * An interface to state relocator.
  *
- * A trie state relocator will be called when a state is being moved
+ * A state relocator will be called when a state is being moved
  * by relocate method of basic_trie during create_transition.
  *
- * @param T Type of state index
+ * @param T Type of state index.
  */
 template<typename T> class trie_relocator_interface {
   public:
 
     /**
-     * Notifies state changing
+     * Notifies state changing.
      *
-     * @param s The original state index
+     * @param s The original state index.
      * @param t The target state index to be moved to.
      */
     virtual void relocate(T s, T t) = 0;
 
     /**
-     * Destructs a trie_relocator
+     * Destructs a trie_relocator.
      */
     virtual ~trie_relocator_interface() {}
 
-    // XXX: Disallow copy constructor and operator =
+    /// @todo Disallow copy constructor and operator =.
 };
 
 /**
  * Resizes a buffer.
- * This function works like realloc(3). If ptr is NULL, it will allocate
- * a new buffer. If new_size is zero, the function acts like a free(3). In
- * addition, this function sets all newly allocated units to zero.
+ * This function is a wrapper of realloc(3). If ptr is NULL, it will allocate
+ * a new buffer. If new_size is zero and ptr is not NULL, It frees ptr.
+ * In addition, this function sets all newly allocated units to zero.
  *
  * @param ptr Pointer to the buffer.
  * @param old_size Original size of the buffer.
  * @param new_size Expected size of the buffer.
- * @return Pointer to new buffer with expected size.
+ * @return Pointer to the new buffer with expected size.
  */
 template<typename T>
 T* resize(T *ptr, size_t old_size, size_t new_size)
@@ -133,21 +133,21 @@ T* resize(T *ptr, size_t old_size, size_t new_size)
 #endif
 }
 
-/// Represents a double-array with basic operations.
+/// A double-array with basic operations.
 class basic_trie
 {
   public:
-    /// Default initial size of states buffer.
+    /// Default initial size of state buffer.
     static const size_t kDefaultStateSize = 4096;
 
-    /// Represents a state
+    /// Represents a state in double-array
     typedef struct {
-        size_type base;  ///< The BASE value according to J.Aoe's paper
-        size_type check; ///< The CHECK value according to J.Aoe's paper
+        size_type base;  ///< The BASE value.
+        size_type check; ///< The CHECK value.
     } state_type;
 
     /**
-     * Represents some information about basic_trie.
+     * Represents information about basic_trie.
      */
     typedef struct {
         size_type size;  ///< Size of state buffer
@@ -155,7 +155,7 @@ class basic_trie
     } header_type;
 
     /**
-     * Represents a pair of extremum. It is used to improve the
+     * Represents a pair of extremum. It is used to improve
      * performance of find_base method.
      */
     typedef struct {
@@ -174,41 +174,41 @@ class basic_trie
                         trie_relocator_interface<size_type> *relocator = NULL);
 
     /**
-     * Constructs a basic_trie from given pointers.
+     * Constructs a basic_trie using existing memory region.
      *
      * @param header Pointer to an existing header data.
-     * @param states Pointer to an existing state data buffer.
+     * @param states Pointer to an existing state buffer.
      */
     explicit basic_trie(void *header, void *states);
 
     /**
      * Constructs a copy from trie.
      *
-     * @param trie Const reference to a basic_trie.
+     * @param trie A basic_trie to be copied from.
      */
     basic_trie(const basic_trie &trie);
 
     /**
      * Copies from a trie.
      *
-     * @param trie Const reference to a basic_trie.
+     * @param trie a basic_trie to be copied from.
      */
     basic_trie &operator=(const basic_trie &trie);
 
     /**
      * Copies from a trie. see also copy constructor and operator =.
      *
-     * @param trie Const reference to a basic_trie.
+     * @param trie a basic_trie to be copied from.
      */
     void clone(const basic_trie &trie);
 
     /// Destructs a basic_trie.
     ~basic_trie();
 
-    /// Stores a value by given key.
+    /// Stores a value using key.
     void insert(const key_type &key, const value_type &value);
 
-    /// Retrieves a value by given key.
+    /// Retrieves a value using key.
     bool search(const key_type &key, value_type *value) const;
 
     /**
@@ -505,20 +505,11 @@ class basic_trie
         return p - targets;
     }
   private:
-    /// Pointer to header.
-    header_type *header_;
-
-    /// Pointer to state buffer.
-    state_type *states_;
-
-    /// Last avaiable BASE value.
-    size_type last_base_;
-
-    /// Number of state being used.
-    size_type max_state_;
-
-    /// Ownership of data.
-    bool owner_;
+    header_type *header_;  ///< Pointer to header.
+    state_type *states_;   ///< Pointer to state buffer.
+    size_type last_base_;  ///< Last avaiable BASE value.
+    size_type max_state_;  ///< Number of state being used.
+    bool owner_;           ///< Ownership of data.
 
     /// Relocator for notifying state changing.
     trie_relocator_interface<size_type> *relocator_;
@@ -528,7 +519,7 @@ class basic_trie
 };
 
 /**
- * Represents an relocator adaptor @see trie_relocator_interface.
+ * An relocator adaptor @see trie_relocator_interface.
  *
  * @param T Type of trie
  */
@@ -544,7 +535,7 @@ class trie_relocator: public trie_relocator_interface<size_type> {
      * @param who Pointer to a host trie.
      * @param relocate Pointer to a relocate function.
      */
-    // XXX: change who to const ?
+    /// @todo change who to const ?
     trie_relocator(T *who, relocate_function relocate)
         :who_(who), relocate_(relocate)
     {
@@ -570,7 +561,7 @@ class trie_relocator: public trie_relocator_interface<size_type> {
 };
 
 /**
- * Represents a two-trie structure.
+ * A two-trie.
  */
 class double_trie: public trie_interface {
   public:
@@ -581,7 +572,7 @@ class double_trie: public trie_interface {
         char magic[16];  ///< Archive magic.
         size_type index_size;  ///< Index array size.
         size_type accept_size; ///< Accept array size.
-        char unused[40]; /// for 32/64bits compatible.
+        char unused[40]; ///< for 32/64bits compatible.
     } header_type;
 
     /**
@@ -597,7 +588,7 @@ class double_trie: public trie_interface {
      * @param filename Filename of the archive.
      */
     explicit double_trie(const char *filename);
-    
+
     /// Destructs a double_trie.
     ~double_trie();
 
@@ -660,13 +651,13 @@ class double_trie: public trie_interface {
 
     /**
      * Inserts inputs into front trie.
-     * 
+     *
      * @param s Mismatch state.
      * @param inputs Buffer of char_type to be inserted.
      * @param value Value for current key.
      */
     void lhs_insert(size_type s, const char_type *inputs, value_type value);
-    
+
     /// cleans all unused states in rear trie from state t.
     void rhs_clean_more(size_type t);
 
@@ -677,6 +668,7 @@ class double_trie: public trie_interface {
      * @param r Accept state.
      * @param match Common string between new key and existing one in front
      *              trie.
+     * @param remain All char_types of inserting key not in rear trie.
      * @param ch Mismatch char_type of the existing key.
      * @param value Value for current key.
      */
@@ -910,7 +902,7 @@ class double_trie: public trie_interface {
 
     /// Pointer to header.
     header_type *header_;
-    
+
     /// Pointer to front trie(lhs_) and rear trie(rhs_).
     basic_trie *lhs_, *rhs_;
 
@@ -952,7 +944,7 @@ class double_trie: public trie_interface {
 };
 
 /**
- * Represents a tail-trie structure.
+ * A tail-trie.
  */
 class single_trie: public trie_interface
 {
@@ -984,9 +976,9 @@ class single_trie: public trie_interface
     /**
      * Constructs an empty single_trie.
      *
-     * @param s Initial size of state.
+     * @param size Initial size of state.
      */
-    // XXX: should default size be kDefaultStateSize?
+    /// @todo should default size be kDefaultStateSize?
     explicit single_trie(size_t size = 0);
 
     /**
@@ -1080,20 +1072,13 @@ class single_trie: public trie_interface
     void create_branch(size_type s, const char_type *inputs, value_type value);
 
   private:
-    /// Pointer to trie
-    basic_trie *trie_;
-
-    /// Pointer to suffix
-    suffix_type *suffix_;
-
-    /// Pointer to header
-    header_type *header_;
-
-    /// Next available suffix
-    size_type next_suffix_;
+    basic_trie *trie_;      ///< Pointer to trie.
+    suffix_type *suffix_;   ///< Pointer to suffix.
+    header_type *header_;   ///< Pointer to header
+    size_type next_suffix_; ///< Next available suffix
 
     /**
-     * Temporary buffer to store common part betwee newly 
+     * Temporary buffer to store common part betwee newly
      * inserting key and an existing one
      */
     common_type common_;

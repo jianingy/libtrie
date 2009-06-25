@@ -39,6 +39,14 @@
 
 BEGIN_TRIE_NAMESPACE
 
+/**
+ * @addtogroup libtrie_api libtrie API
+ *
+ * @{
+ *
+ *  The libtrie's API
+ */
+
 /// Represents a value in double-array.
 typedef int32_t value_type;
 
@@ -56,7 +64,7 @@ enum trie_type {
 };
 
 /**
- * Represents trie archive error.
+ * Indicates a Trie archive error.
  *
  * This exception will be threw when there are errors about
  * trie's index file.
@@ -72,7 +80,7 @@ class bad_trie_archive: public std::runtime_error {
 };
 
 /**
- * Represents source text error.
+ * Indicates a source text error.
  *
  * This exception will be threw when there are errors about
  * a formatted text file.
@@ -288,27 +296,18 @@ class key_type {
     }
 
   private:
-    /// a C-style buffer for converting.
-    mutable char *cstr_;
-
-    /// Size of cstr_.
-    mutable size_t cstr_capacity_;
-
-    /// Internal data buffer.
-    char_type *data_;
-
-    /// Size of data_.
-    size_t data_capacity_;
-
-    /// Length of data_.
-    size_t length_;
+    mutable char *cstr_;  ///< a C-style buffer for converting.
+    mutable size_t cstr_capacity_;  ///< Size of cstr_.
+    char_type *data_;  ///< Internal data buffer.
+    size_t data_capacity_;  ///< Size of data_.
+    size_t length_;  ///< Length of data_.
 };
 
 /// Represents a result set for prefix_search.
 typedef std::vector<std::pair<key_type, value_type> > result_type;
 
 /**
- * Represents an interface for different trie structure.
+ * An interface for different trie structure.
  */
 class trie_interface {
   public:
@@ -418,6 +417,8 @@ trie_interface *create_trie(trie_type type = DOUBLE_TRIE, size_t size = 4096);
 trie_interface *create_trie(const char *archive);
 
 END_TRIE_NAMESPACE
+
+/** @} */
 
 #endif  // TRIE_H_
 
