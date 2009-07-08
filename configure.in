@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.63])
+AC_PREREQ([2.60])
 AC_INIT([libtrie], [0.1.0], [jianingy.yang@gmail.com])
 #AC_CONFIG_SRCDIR([src/trie_impl.h])
 AC_CONFIG_HEADERS([config.h])
