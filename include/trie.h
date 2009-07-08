@@ -436,7 +436,4 @@ END_TRIE_NAMESPACE
 
 */
 
-
- */
-
 // vim: ts=4 sw=4 ai et
