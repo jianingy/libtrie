@@ -16,8 +16,8 @@ int main(int argc, char *argv[])
     }
 
     std::ifstream source(argv[1]);
-    trie *trie = trie::create_trie(atoi(argv[2]) == 1?SINGLE_TRIE:DOUBLE_TRIE);
-    key_type key;
+    trie *trie = trie::create_trie(atoi(argv[2]) == 1?trie::SINGLE_TRIE:trie::DOUBLE_TRIE);
+    trie::key_type key;
     struct timezone tz;
     struct timeval total = {0, 0}, tv[2];
 
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
         std::string line;
         int i = 0, j = 0;
         while (!check.eof()) {
-            value_type value;
+            trie::value_type value;
             getline(check, line);
             if (line.empty()) continue;
             gettimeofday(&tv[0], &tz);

@@ -20,24 +20,24 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	trie *trie = trie::create_trie(argv[1][0] == '1'?SINGLE_TRIE:DOUBLE_TRIE);
+	trie *trie = trie::create_trie(argv[1][0] == '1'?trie::SINGLE_TRIE:trie::DOUBLE_TRIE);
 	size_t i;
 	const char prefix[] = "back!";
 	const char *dict[] = {"bachelor", "back", "badge", "badger", "badness", "bcs", "backbone"};
-	key_type key;
+	trie::key_type key;
 
 	for (i = 0; i < sizeof(dict) / sizeof(char *); i++) {
 		key.assign(dict[i], strlen(dict[i]));
 		trie->insert(key, i + 1);
 	}
 
-	result_type result;
+	trie::result_type result;
 	for (i = 0; i < sizeof(prefix) / sizeof(prefix[0]); i++) {
-		key_type store(prefix, i);
+		trie::key_type store(prefix, i);
 		std::cout << "== Searching " << store.c_str() << " == " << std::endl;
 		result.clear();
 		trie->prefix_search(store, &result);
-		result_type::const_iterator it;
+		trie::result_type::const_iterator it;
 		for (it = result.begin(); it != result.end(); it++)
 			std::cout << it->first.c_str() << " = " << it->second << std::endl;
 	}

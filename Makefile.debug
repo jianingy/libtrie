@@ -12,3 +12,5 @@ test/regress_file: src/trie.cc src/trie_impl.cc test/regress_file.cc
 test/regress_case: src/trie.cc src/trie_impl.cc test/regress_case.cc
 	$(CXX) $(CFLAGS) -o $@ $^
 
+clean:
+	rm -rf test/regress_{case,file,prefix}

@@ -623,7 +623,7 @@ class double_trie: public trie {
         fprintf(stderr, "========================================");
         fprintf(stderr, "\nSEQ     |");
         for (i = istart; i < dsize && i < header_->index_size; i++)
-            fprintf(stderr, "%4d ", i);
+            fprintf(stderr, "%4u ", i);
         fprintf(stderr, "\nDATA    |");
         for (i = istart; i < dsize && i < header_->index_size; i++)
             fprintf(stderr, "%4d ", index_[i].data);
@@ -632,7 +632,7 @@ class double_trie: public trie {
             fprintf(stderr, "%4d ", index_[i].index);
         fprintf(stderr, "\nCOUNT   |");
         for (i = astart; i < dsize && i < header_->accept_size; i++)
-            fprintf(stderr, "%4d ", count_referer(accept_[i].accept));
+            fprintf(stderr, "%4lu ", count_referer(accept_[i].accept));
         fprintf(stderr, "\nACCEPT  |");
         for (i = astart; i < dsize && i < header_->accept_size; i++)
             fprintf(stderr, "%4d ", accept_[i].accept);

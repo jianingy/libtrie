@@ -17,7 +17,7 @@ int main()
 {
     size_t i, j;
     trie::value_type val;
-    key_type key;
+    trie::key_type key;
     const char *dict[][256] = {
         {"abc", "def"},
         {"baby", "bachelor", "back", "badge", "badger", "badness", "bcs"},
@@ -39,7 +39,7 @@ int main()
     printf("----------\n");
     for (i = 0; dict[i][0]; i++) {
         basic_trie btrie;
-        printf("wordset %d: ", i);
+        printf("wordset %lu: ", i);
         for (j = 0; dict[i][j]; j++) {
             key.assign(dict[i][j], length(dict[i][j]));
             btrie.insert(key, unsigned_value(j, i));
@@ -62,7 +62,7 @@ int main()
     printf("----------\n");
     for (i = 0; dict[i][0]; i++) {
         basic_trie btrie;
-        printf("wordset %d: ", i);
+        printf("wordset %lu: ", i);
         for (j = 0; dict[i][j]; j++) {
             key.assign(dict[i][j], length(dict[i][j]));
             btrie.insert(key, unsigned_value(j, i));
@@ -86,7 +86,7 @@ int main()
     printf("----------\n");
     for (i = 0; dict[i][0]; i++) {
         basic_trie btrie;
-        printf("wordset %d: ", i);
+        printf("wordset %lu: ", i);
         for (j = 0; dict[i][j]; j++) {
             key.assign(dict[i][j], length(dict[i][j]));
             btrie.insert(key, unsigned_value(j, i));
@@ -112,7 +112,7 @@ int main()
     printf("----------\n");
     for (i = 0; dict[i][0]; i++) {
         double_trie btrie;
-        printf("wordset %d: ", i);
+        printf("wordset %lu: ", i);
         for (j = 0; dict[i][j]; j++) {
             key.assign(dict[i][j], length(dict[i][j]));
             btrie.insert(key, signed_value(j, i));
@@ -150,7 +150,7 @@ int main()
             if (btrie.search(key, &val) && val + i == 1) {
                 printf("[%d] ", val);
             } else {
-                printf("\nTEST FAILED on #%d = %d!\n", i, val);
+                printf("\nTEST FAILED on #%lu = %d!\n", i, val);
                 btrie.trace_table(0, 0);
                 std::cout << "FRONT: \n";
                 btrie.front_trie()->trace(1);
@@ -167,7 +167,7 @@ int main()
     printf("----------\n");
     for (i = 0; dict[i][0]; i++) {
         single_trie btrie;
-        printf("wordset %d: ", i);
+        printf("wordset %lu: ", i);
         for (j = 0; dict[i][j]; j++) {
             key.assign(dict[i][j], length(dict[i][j]));
             btrie.insert(key, signed_value(j, i));
