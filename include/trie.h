@@ -303,7 +303,7 @@ class trie::key_type {
     /// Converts a char to char_type.
     static char_type char_in(const char ch)
     {
-        return static_cast<unsigned char>(ch + 1);
+        return static_cast<unsigned char>(ch) + 1;
     }
 
     /// Converts a char_type to char.
