@@ -1,0 +1,26 @@
+:Author: Jianing YANG
+:Email: jianingy.yang at gmail dot com
+
+== Introduction
+
+This is an implementation of two-trie and tail-trie using J.Aoe's
+Double- Array Structure. Trie is an associative container. It has a
+very good searching performance. The time complexity of searching is
+O(1) respected to the number of items. This also means that the number
+of items has no negative effect on its searching performance.
+Therefore trie is widely used as dictionary for Natural Language
+Processing and Network Information Retrieving. For more information
+about trie please refer to http://en.wikipedia.org/wiki/Trie[Trie in Wikipedia].
+
+== Features
+
+- Two main implementations: tail trie and two trie.
+- Two searching methods: prefix search and exact match.
+- Key name can be unicode characters.
+- Index can be stored as a disk file and be loaded via mmap(2) system call.
+- Index is 64 bits compatible. Once index built, it can be used in
+  both 32 bits and 64 bits system.
+
+== License
+
+This project is under BSD License. Feel free to use it.
