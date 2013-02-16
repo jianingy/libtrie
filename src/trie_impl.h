@@ -390,7 +390,7 @@ class basic_trie: public trie
         const char_type *p = inputs;
         do {
             size_type t = prev(s);
-            if (!check_transition(t, next(t, *p))) {
+            if (next(t, *p) != s || !check_transition(t, next(t, *p))) {
                 *mismatch = p;
                 return s;
             }
